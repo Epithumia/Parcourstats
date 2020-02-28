@@ -64,7 +64,8 @@ Le programme limite volontairement la fréquence des données à 4/jour (minuit,
 Un exemple de fichier de configuration est donné par [development.sample.ini]() pour le développement, 
 et par [production.sample.ini]() pour le mise en production.
 
-Pour récupérer plusieurs formations, il faut plusieurs fichiers de configuration.
+Pour récupérer plusieurs formations, il faut plusieurs fichiers de configuration. A utiliser à vos risques et périls,
+je n'ai accès qu'à une et je ne peux pas tester que cela récupère bien les détails des différentes formations.
 
 ```
 pserve development.ini
