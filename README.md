@@ -10,6 +10,7 @@ Les insctructions suivantes devraient vous aider à installer et utiliser cet ou
 
 Il faut :
 - Python >=3.6
+- Npm >=10
 - Chrome
 Sous Debian/Ubuntu par exemple :
 ```
@@ -36,6 +37,8 @@ git clone https://github.com/Epithumia/Parcourstats
 cd Parcourstats
 pip install -e . 
 alembic upgrade head
+npm install
+npm run build
 ```
 
 ## Utilisation
