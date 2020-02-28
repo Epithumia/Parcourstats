@@ -1,0 +1,187 @@
+body {
+    font-weight: 300;
+    font-size: 14px;
+    color: #727375;
+    background: #eeeeee;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 300;
+}
+
+p {
+    font-weight: 300;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 60px; /* Set the fixed height of the footer here */
+    line-height: 60px; /* Vertically center the text there */
+    background-color: #81b92f;
+    color: #ffffff;
+    z-index: 99; /* Pour que cela soit par dessus le reste */
+}
+
+.headercontent {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 60px; /* Set the fixed height of the footer here */
+    line-height: 60px; /* Vertically center the text there */
+    background-color: #e89f0c;
+    color: #000000;
+    z-index: 1000;
+}
+
+header .header {
+    color: #ffffff;
+    font-weight: 600;
+    font-size: larger;
+}
+
+.img-responsive {
+    display: block;
+    height: auto;
+    max-width: 100%;
+}
+
+.font-normal {
+    font-weight: 400;
+}
+
+.font-semi-bold {
+    font-weight: 600;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.starter-template {
+    margin-top: 120px;
+    margin-bottom: 120px;
+}
+
+.starter-template .content {
+    margin-left: 10px;
+}
+
+.starter-template .content h1 {
+    margin-top: 10px;
+    font-size: 60px;
+}
+
+.lead {
+    font-size: 25px;
+    color: #004871;
+}
+
+footer .links {
+    float: right;
+    right: 0;
+    margin-right: 5px;
+}
+
+.footer-links-ul {
+    display: block;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-links-ul li {
+    list-style: none;
+    display: inline;
+    margin-right: 15px;
+}
+
+.footer-links-ul li:first-child {
+    margin-left: 0;
+}
+
+.footer-links-ul li:last-child {
+    margin-right: 0;
+}
+
+.footer-links-ul .current-version {
+    font-weight: 400;
+}
+
+.footer-links-ul li a {
+    color: #ffffff;
+    border-bottom: 2px solid currentColor;
+    line-height: .85;
+}
+
+.footer-links-ul li a:hover {
+    color: #eeeeee;
+    text-decoration: none;
+    border-bottom: 2px solid currentColor;
+    line-height: .85;
+}
+
+.footer-links-ul li .icon-muted {
+    color: #ffffff;
+    margin-right: 5px;
+}
+
+.footer-links-ul li:hover .icon-muted {
+    color: #eeeeee;
+}
+
+footer .copyright {
+    font-size: .9em;
+    float: left;
+    left: 0;
+    margin-left: 5px;
+}
+
+.sentry-error-embed {
+    margin-top: 6%;
+}
+
+.modal-footer {
+    position: unset;
+}
+
+.card-text {
+    white-space: pre-line;
+    overflow-wrap: break-word;
+}
+
+.login-card-header {
+    background-color: #e89f0c;
+    font-weight: bold;
+    color: white;
+}
+
+.login-card {
+    width: 25%;
+}
+
+@media only screen and (max-width: 768px) {
+    .header {
+        text-align: center;
+    }
+
+    .login-card {
+        width: 75%;
+    }
+
+    .copyright {
+        width: 30%;
+        line-height: 210%;
+    }
+
+    footer .links {
+        line-height: normal;
+        width: 65%;
+        overflow-wrap: break-word;
+    }
+}

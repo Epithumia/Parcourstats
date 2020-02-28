@@ -1,0 +1,18 @@
+{% extends "parcourstats:/templates/layout.jinja2" %}
+
+{% block title %}
+    {{ title }}
+{% endblock title %}
+
+{% block navbar %}
+    {{ short_title }}
+{% endblock navbar %}
+
+{% block content %}
+    {% if nom %}<h1 style="text-align:center;">Bienvenue {{ nom }}</h1>{% endif %}
+    <div id="app"></div>
+    <!--suppress HtmlUnknownTarget -->
+    <script src="{{ url }}/static/front/build.js"></script>
+    <!--suppress HtmlUnknownTarget -->
+    <script src="{{ url }}/static/front/vendor.js"></script>
+{% endblock content %}
