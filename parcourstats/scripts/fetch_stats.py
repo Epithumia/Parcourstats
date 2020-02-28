@@ -22,10 +22,10 @@ def run(args):
         engine = engine_from_config(settings, 'sqlalchemy.')
         login = settings['parcoursup.login']
         mdp = settings['parcoursup.mdp']
-        etbt = settings.get('parcoursup.etbt', None)  # = I.U.T d'Orsay - Université Paris-Saclay
-        type_formation = settings.get('parcoursup.type_formation', None)  # = DUT
-        domaine = settings.get('parcoursup.domaine', None)  # = DUT - Production
-        mention = settings.get('parcoursup.mention', None)  # = Informatique
+        etbt = settings.get('parcoursup.etbt', None)
+        type_formation = settings.get('parcoursup.type_formation', None)
+        domaine = settings.get('parcoursup.domaine', None)
+        mention = settings.get('parcoursup.mention', None)
         code = settings.get('parcoursup.code_formation', None)
         sf = get_session_factory(engine)
         dbsession = get_tm_session(sf, transaction.manager)
@@ -49,9 +49,8 @@ def run(args):
         element = WebDriverWait(browser, 90).until(lambda x: x.find_element_by_link_text('Statistiques'))
         element.click()
         ligne = 0
-
+        fpath = '/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr['
         try:
-            fpath = '/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr['
             for n in range(1, 50):
                 element1 = browser.find_element_by_xpath(fpath + str(n) + ']/td[1]')
                 element2 = browser.find_element_by_xpath(fpath + str(n) + ']/td[2]')
@@ -84,15 +83,15 @@ def run(args):
         fo.mention = mention
         dbsession.add(fo)
         transaction.manager.commit()
-        element = browser.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr/td[7]')
+        element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[7]')
         nb_voeux_total = element.text
-        element = browser.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr/td[9]')
+        element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[9]')
         nb_filles_total = element.text
-        element = browser.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr/td[10]')
+        element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[10]')
         nb_garcons_total = element.text
-        element = browser.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr/td[11]')
+        element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[11]')
         nb_boursiers_total = element.text
-        element = browser.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr/td[12]')
+        element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[12]')
         nb_non_boursiers_total = element.text
 
         element = browser.find_element_by_id('choix_stats')
@@ -100,15 +99,15 @@ def run(args):
         sel.select_by_visible_text('Total des voeux confirmés')
 
         element = WebDriverWait(browser, 90).until(
-            lambda x: x.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr/td[7]'))
+            lambda x: x.find_element_by_xpath(fpath + str(ligne) + ']/td[7]'))
         nb_voeux_confirmes = element.text
-        element = browser.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr/td[9]')
+        element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[9]')
         nb_filles_confirmes = element.text
-        element = browser.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr/td[10]')
+        element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[10]')
         nb_garcons_confirmes = element.text
-        element = browser.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr/td[11]')
+        element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[11]')
         nb_boursiers_confirmes = element.text
-        element = browser.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr/td[12]')
+        element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[12]')
         nb_non_boursiers_confirmes = element.text
 
         now = datetime.datetime.now()
@@ -141,7 +140,7 @@ def run(args):
         dbsession.add(stat_gen_q)
         transaction.manager.commit()
 
-        element = browser.find_element_by_link_text('Détails')
+        element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[13]/a')
         element.click()
 
         element = WebDriverWait(browser, 90).until(
