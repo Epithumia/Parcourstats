@@ -151,12 +151,12 @@ def run(args):
             lambda x: x.find_element_by_id('choix_details_stats'))
         sel = Select(element)
 
-        path = '/html/body/div[2]/div[4]/div/div[2]/div[3]/div/table/tbody/tr[%1]/td[%2]'
+        path = '/html/body/div[2]/div[4]/div/div[2]/div[3]/div/table/tbody/tr['
         try:
             details_total = {}
             for i in range(1, 30):
                 j = 1
-                xpath = path.format(i, j)
+                xpath = path + str(i) + ']/td[' + str(j) + ']'
                 cell = browser.find_element_by_xpath(xpath)
                 serie_bac = cell.text
                 if serie_bac not in details_total.keys():
@@ -170,7 +170,7 @@ def run(args):
                     transaction.manager.commit()
 
                 j = 2
-                xpath = path.format(i, j)
+                xpath = path + str(i) + ']/td[' + str(j) + ']'
                 cell = browser.find_element_by_xpath(xpath)
                 type_bac = cell.text
                 typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
@@ -181,7 +181,7 @@ def run(args):
                     dbsession.add(typebac_q)
                     transaction.manager.commit()
                 j = 3
-                xpath = path.format(i, j)
+                xpath = path + str(i) + ']/td[' + str(j) + ']'
                 cell = browser.find_element_by_xpath(xpath)
                 nb_voeux_serie_type = cell.text
                 details_total[serie_bac][type_bac] = nb_voeux_serie_type
@@ -208,7 +208,7 @@ def run(args):
             details_confirmes = {}
             for i in range(1, 30):
                 j = 1
-                xpath = path.format(i, j)
+                xpath = path + str(i) + ']/td[' + str(j) + ']'
                 cell = browser.find_element_by_xpath(xpath)
                 serie_bac = cell.text
                 if serie_bac not in details_confirmes.keys():
@@ -221,7 +221,7 @@ def run(args):
                     dbsession.add(seriebac_q)
                     transaction.manager.commit()
                 j = 2
-                xpath = path.format(i, j)
+                xpath = path + str(i) + ']/td[' + str(j) + ']'
                 cell = browser.find_element_by_xpath(xpath)
                 type_bac = cell.text
                 typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
@@ -232,7 +232,7 @@ def run(args):
                     dbsession.add(typebac_q)
                     transaction.manager.commit()
                 j = 3
-                xpath = path.format(i, j)
+                xpath = path + str(i) + ']/td[' + str(j) + ']'
                 cell = browser.find_element_by_xpath(xpath)
                 nb_voeux_serie_type = cell.text
                 details_confirmes[serie_bac][type_bac] = nb_voeux_serie_type
