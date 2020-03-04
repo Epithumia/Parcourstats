@@ -4,13 +4,14 @@ Logiciel de récupération et d'affichage des statistiques Parcoursup pour une o
 
 ## Démarrage
 
-Les insctructions suivantes devraient vous aider à installer et utiliser cet outil.
+Les instructions suivantes devraient vous aider à installer et utiliser cet outil.
 
 ### Pré-requis
 
 Il faut :
 - Python >=3.6
 - Npm >=10
+- Redis
 - Chrome
 Sous Debian/Ubuntu par exemple :
 ```
@@ -28,7 +29,7 @@ sudo curl http://chromedriver.storage.googleapis.com/$VERSION/chromedriver_$PLAT
 
 ### Installation
 
-Il faut (idéalement) créer un environement virtuel (via `virtualenv`) ou a minima créer un dossier
+Il faut (idéalement) créer un environnement virtuel (via `virtualenv`) ou a minima créer un dossier
 qui sera ensuite réservé avec la bonne distribution python dedans (avec `pyenv` par exemple).
 Une fois dans le dossier :
 
@@ -81,6 +82,10 @@ Pour la mise en production :
 gunicorn --timeout 180 --workers 4 --paster production.ini
 ```
 Tout cela peut tourner derrière un serveur Nginx.
+
+## Démo
+
+[https://pstatsdemo.grendel.fr](https://pstatsdemo.grendel.fr/stats)
 
 ## Frameworks
 

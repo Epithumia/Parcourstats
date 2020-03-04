@@ -17,7 +17,6 @@ def main(global_config, **settings):
     config.add_jinja2_extension('jinja2.ext.do')
     config.include('pyramid_redis_sessions')
     config.include('pyramid_dogpile_cache2')
-    config.include('pyramid_raven')
     config.include('pyramid_tm')
     config.include('cornice')
 

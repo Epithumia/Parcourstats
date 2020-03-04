@@ -22,9 +22,6 @@ def internal_server_error(exc, request):
     msg = exc.args[0] if exc.args else ""
     url = request.application_url
 
-    # Dire au client Sentry de capturer l'erreur et l'envoyer.
-    request.raven.captureException()
-
     html = render('parcourstats:templates/500.jinja2', {'url': url, 'msg': msg}, request=request)
     resp = Response(html)
     resp.status_code = 500
