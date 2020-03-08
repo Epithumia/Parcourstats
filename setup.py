@@ -12,6 +12,7 @@ requires = [
     'transaction',
     'zope.sqlalchemy',
     'waitress',
+    'pandas',
     'iso8601',
     'cornice',
     'dictalchemy',
