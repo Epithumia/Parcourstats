@@ -87,7 +87,6 @@
     Vue.use(LayoutPlugin);
 
     const utils = require('../components/utils.js');
-    const hash = require('object-hash');
 
 
     export default {
@@ -105,7 +104,7 @@
                 donnees: null,
                 options: {
                     chart: {
-                        id: 'stats-matiere',
+                        id: 'stats-parcoursup',
                         animations: {
                             enabled: false
                         }
