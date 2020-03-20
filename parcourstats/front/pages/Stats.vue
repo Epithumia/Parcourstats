@@ -191,7 +191,9 @@
                 this.series_bac = t_series_bac;
                 this.types_bac = t_types_bac;
                 this.stats_gen = t_gen;
-
+                if (t_series[0].data.length * t_series.length > 1000) {
+                    this.options.markers.size = 0;
+                }
             }
 
         },
