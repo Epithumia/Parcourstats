@@ -10,6 +10,7 @@ from sqlalchemy.orm import (
 
 from .meta import Base
 
+
 class Formation(Base):
     """
     Formation
@@ -22,6 +23,7 @@ class Formation(Base):
     type_formation = Column(String, nullable=False, doc="Type de formation, *obligatoire*.")
     domaine = Column(String, nullable=False, doc="Domaine de la formation, *obligatoire*.")
     mention = Column(String, nullable=False, doc="Mention de la formation', *obligatoire*.")
+
 
 class SerieBac(Base):
     """
@@ -58,7 +60,7 @@ class StatDetail(Base):
     """
     __tablename__ = 'statdetail'
     id_formation = Column(Integer, ForeignKey('formation.code'), primary_key=True,
-                      doc="Identifiant de la formation. Fait partie de la clef primaire.")
+                          doc="Identifiant de la formation. Fait partie de la clef primaire.")
     id_serie = Column(Integer, ForeignKey('seriebac.id'), primary_key=True,
                       doc="Identifiant de la série de bac. Fait partie de la clef primaire.")
     id_typebac = Column(Integer, ForeignKey('typebac.id'), primary_key=True,
@@ -100,6 +102,25 @@ class StatGenerale(Base):
     nb_non_boursiers_confirmes = Column(Integer, default=0, doc="Nombre de voeux (non boursiers) confirmés.")
 
 
+class Groupe(Base):
+    """
+    Groupe
+
+    Groupe Parcoursup
+    """
+    __tablename__ = 'groupe'
+
+    code = Column(Integer, primary_key=True, doc="Identifiant du groupe")
+    libelle = Column(String, doc="Libellé du groupe")
+    places = Column(Integer, doc="Nombre de places")
+    nbAppel = Column(Integer, doc="Nombre de candidats à appeler")
+
+    id_formation = Column(Integer, ForeignKey('formation.code'),
+                          doc="Identifiant de la formation. Fait partie de la clef primaire.")
+    formation = relationship("Formation", backref=backref("groupes", cascade='all'), foreign_keys=[id_formation],
+                             doc="Relation vers :class:`.Formation`")
+
+
 class Candidat(Base):
     """
     Canddiat
@@ -116,6 +137,12 @@ class Candidat(Base):
     ordreAppel = Column(Integer, doc="Ordre d'appel Parcoursup")
     classement = Column(Integer, doc="Classement")
 
+    id_groupe = Column(Integer, ForeignKey('groupe.code'),
+                       doc="Identifiant de la formation. Fait partie de la clef primaire.")
+    groupe = relationship("Groupe", backref=backref("candidats", cascade='all'), foreign_keys=[id_groupe],
+                          doc="Relation vers :class:`.Groupe`")
+
+
 class StatAdmission(Base):
     """
     StatAdmission
@@ -124,10 +151,8 @@ class StatAdmission(Base):
     """
     __tablename__ = 'statadmission'
 
-    id_formation = Column(Integer, ForeignKey('formation.code'), primary_key=True,
-                          doc="Identifiant de la formation. Fait partie de la clef primaire.")
     id_candidat = Column(Integer, ForeignKey('candidat.id'), primary_key=True,
-                      doc="Identifiant du candidat. Fait partie de la clef primaire.")
+                         doc="Identifiant du candidat. Fait partie de la clef primaire.")
     timestamp = Column(DateTime, primary_key=True,
                        doc="Date et heure de récupération. Fait partie de la clef primaire.")
     etat = Column(String, doc="Etatde la proposition Parcoursup")
