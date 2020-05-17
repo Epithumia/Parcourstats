@@ -1,11 +1,13 @@
 import zope.sqlalchemy
 from sqlalchemy import engine_from_config
 from sqlalchemy.orm import sessionmaker, configure_mappers
-# import or define all models here to ensure they are attached to the
-# Base.metadata prior to any initialization routines
 
 from parcourstats.models.acl import Special, User  # noqa
-from parcourstats.models.stats import StatDetail, TypeBac, SerieBac, StatGenerale, Formation  # noqa
+from parcourstats.models.stats import StatDetail, TypeBac, SerieBac, StatGenerale, Formation, Groupe, Candidat, \
+    StatAdmission  # noqa
+
+# import or define all models here to ensure they are attached to the
+# Base.metadata prior to any initialization routines
 
 # run configure_mappers after defining all of the models to ensure
 # all relationships can be setup

@@ -157,3 +157,6 @@ class StatAdmission(Base):
                        doc="Date et heure de récupération. Fait partie de la clef primaire.")
     etat = Column(String, doc="Etatde la proposition Parcoursup")
     decision = Column(String, doc="Décision du candidat")
+
+    candidat = relationship("Candidat", backref=backref("statsadmissions", cascade='all'), foreign_keys=[id_candidat],
+                          doc="Relation vers :class:`.Candidat`")

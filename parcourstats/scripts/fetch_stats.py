@@ -11,7 +11,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from sqlalchemy import engine_from_config
 
 from parcourstats.models import get_session_factory, get_tm_session, StatGenerale, SerieBac, TypeBac, StatDetail, \
-    Formation
+    Formation, Groupe, Candidat, StatAdmission
 
 
 def run(args):
@@ -251,6 +251,96 @@ def run(args):
         except NoSuchElementException:
             pass
 
+        element = WebDriverWait(browser, 90).until(
+            lambda x: x.find_element_by_link_text('Admissions'))
+        element.click()
+        element = WebDriverWait(browser, 90).until(
+            lambda x: x.find_element_by_link_text('Semaine de contrôle et de vérification'))
+        element.click()
+        fpath = '/html/body/div[2]/div[4]/div/div/div[3]/div/table/tbody/tr['
+        try:
+            for n in range(1, 50):
+                element2 = browser.find_element_by_xpath(fpath + str(n) + ']/td[2]')
+                if (code and element2.text == code):
+                    ligne = n
+        except NoSuchElementException:
+            pass
+        if ligne == 0:
+            print('Formation inconnue')
+            browser.close()
+            exit(1)
+
+        try:
+            for n in range(ligne, 50):
+                fpath = '/html/body/div[2]/div[4]/div/div/div[3]/div/table/tbody/tr['
+                code_groupe = browser.find_element_by_xpath(fpath + str(n) + ']/td[4]').text
+                libelle = browser.find_element_by_xpath(fpath + str(n) + ']/td[5]').text
+                places = browser.find_element_by_xpath(fpath + str(n) + ']/td[6]').text
+                nb_cand = browser.find_element_by_xpath(fpath + str(n) + ']/td[7]').text
+                groupe = dbsession.query(Groupe).filter(Groupe.code == code_groupe)
+                if groupe.count() == 0 and libelle != 'Total':
+                    groupe = Groupe(code=code_groupe, libelle=libelle, places=places, nbAppel=nb_cand,
+                                    id_formation=code)
+                    dbsession.add(groupe)
+                    transaction.manager.commit()
+                # /html/body/div[2]/div[4]/div/div/div[3]/div/table/tbody/tr[1]/td[12]
+                if libelle != 'Total':
+                    details = browser.find_element_by_xpath(fpath + str(n) + ']/td[12]')
+                    count = int(details.text)
+                    details.click()
+
+                    # /html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select/
+                    element = WebDriverWait(browser, 90).until(
+                        lambda x: x.find_element_by_xpath(
+                            '/html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select'))
+                    sel = Select(element)
+                    sel.select_by_visible_text('Tout')
+                    # Get tous les candidats du groupe
+                    cpath = '/html/body/div[2]/div[5]/div/div[2]/div[3]/div/table/tbody/tr['
+                    list_cand = dbsession.query(Candidat.id).filter(Candidat.id_groupe == code_groupe).all()
+                    list_cand = [x[0] for x in list_cand]
+                    for ordre in range(1, count + 1):
+                        # /html/body/div[2]/div[5]/div/div[2]/div[3]/div/table/tbody/tr[1]/td[1]
+                        oa = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[1]').text
+                        rang = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[2]').text
+                        num_dos = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[4]').text
+                        nom = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[5]').text
+                        profil = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[6]').text
+                        etab = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[7]').text
+                        etat = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[8]').text
+                        decision = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[9]').text
+                        if int(num_dos) not in list_cand:
+                            candidat = Candidat(id=int(num_dos), nom=nom, profil=profil, etablissement=etab,
+                                                ordreAppel=oa, classement=rang, id_groupe=code_groupe)
+                            dbsession.add(candidat)
+                            transaction.manager.commit()
+                        now = datetime.datetime.now()
+                        if now.time().hour < 6:
+                            prev = datetime.datetime(now.year, now.month, now.day)
+                        elif now.time().hour < 12:
+                            prev = datetime.datetime(now.year, now.month, now.day, 6, 0, 0)
+                        elif now.time().hour < 18:
+                            prev = datetime.datetime(now.year, now.month, now.day, 12, 0, 0)
+                        else:
+                            prev = datetime.datetime(now.year, now.month, now.day, 18, 0, 0)
+                        stat_adm = dbsession.query(StatAdmission).filter(StatAdmission.id_candidat == num_dos,
+                                                                         StatAdmission.timestamp == prev).first()
+                        if stat_adm is None:
+                            stat_adm = StatAdmission(id_candidat=num_dos, timestamp=prev, etat=etat, decision=decision)
+                        else:
+                            stat_adm.etat = etat
+                            stat_adm.decision = decision
+                        dbsession.add(stat_adm)
+                        transaction.manager.commit()
+                    element = WebDriverWait(browser, 90).until(
+                        lambda x: x.find_element_by_link_text('Admissions'))
+                    element.click()
+                    element = WebDriverWait(browser, 90).until(
+                        lambda x: x.find_element_by_link_text('Semaine de contrôle et de vérification'))
+                    element.click()
+
+        except NoSuchElementException:
+            pass
         browser.close()
 
 

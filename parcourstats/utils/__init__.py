@@ -2,7 +2,7 @@ import json
 
 from pandas import read_sql, merge
 
-from parcourstats.models import SerieBac, TypeBac, StatDetail, StatGenerale
+from parcourstats.models import SerieBac, TypeBac, StatDetail, StatGenerale, StatAdmission, Candidat
 
 
 def get_data(code, dbsession):
@@ -53,3 +53,17 @@ def get_data(code, dbsession):
     stats_gen = json.loads(stats_gen.to_json())
 
     return {'data': dict(sorted(stats.items())), 'series': series, 'types': types, 'general': stats_gen}
+
+
+def get_admissions(code, dbsession):
+    data_query = dbsession.query(StatAdmission).join(StatAdmission.candidat).filter(Candidat.id_groupe == code)
+    data = read_sql(data_query.statement, data_query.session.bind)
+    data.replace(to_replace='', value='-', inplace=True)
+    data_decision = data.groupby(['decision', 'timestamp']).count().reset_index().pivot(index='timestamp',
+                                                                                        columns='decision',
+                                                                                        values='id_candidat')
+    data_decision = json.loads(data_decision.to_json())
+    data_etat = data.groupby(['etat', 'timestamp']).count().reset_index().pivot(index='timestamp', columns='etat',
+                                                                                values='id_candidat')
+    data_etat = json.loads(data_etat.to_json())
+    return {'decisions': data_decision, 'etats': data_etat}
