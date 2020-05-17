@@ -98,3 +98,37 @@ class StatGenerale(Base):
     nb_garcons_confirmes = Column(Integer, default=0, doc="Nombre de voeux (garçons) confirmés.")
     nb_boursiers_confirmes = Column(Integer, default=0, doc="Nombre de voeux (boursiers) confirmés.")
     nb_non_boursiers_confirmes = Column(Integer, default=0, doc="Nombre de voeux (non boursiers) confirmés.")
+
+
+class Candidat(Base):
+    """
+    Canddiat
+
+    Données de base sur chaque candidat
+    """
+    __tablename__ = 'candidat'
+
+    id = Column(Integer, primary_key=True, doc="Identifiant (numéro de dossier) du candidat")
+    nom = Column(String, doc="Nom du candidat")
+    prenom = Column(String, doc="Prénom du candidat")
+    profil = Column(String, doc="Profil parcoursup du candidat")
+    etablissement = Column(String, doc="Etablissement d'origine du candidat")
+    ordreAppel = Column(Integer, doc="Ordre d'appel Parcoursup")
+    classement = Column(Integer, doc="Classement")
+
+class StatAdmission(Base):
+    """
+    StatAdmission
+
+    Suivi des admissions
+    """
+    __tablename__ = 'statadmission'
+
+    id_formation = Column(Integer, ForeignKey('formation.code'), primary_key=True,
+                          doc="Identifiant de la formation. Fait partie de la clef primaire.")
+    id_candidat = Column(Integer, ForeignKey('candidat.id'), primary_key=True,
+                      doc="Identifiant du candidat. Fait partie de la clef primaire.")
+    timestamp = Column(DateTime, primary_key=True,
+                       doc="Date et heure de récupération. Fait partie de la clef primaire.")
+    etat = Column(String, doc="Etatde la proposition Parcoursup")
+    decision = Column(String, doc="Décision du candidat")
