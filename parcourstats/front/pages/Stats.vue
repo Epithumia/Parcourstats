@@ -70,6 +70,33 @@
                             </b-col>
                         </b-row>
                     </b-tab>
+                    <b-tab title="Admissions">
+                        <b-row class="text-center">
+                            <b-col>
+                                <p v-if="!groupes">
+                                    Chargement en cours...
+                                </p>
+                                <b-form-select v-model="selected_groupe" :options="groupes" class="mb-3"
+                                               v-if="groupes">
+                                </b-form-select>
+                            </b-col>
+                            <b-col>
+
+                            </b-col>
+
+                        </b-row>
+                        <b-row>
+                            <b-col>
+                                <p v-if="!ready">
+                                    Chargement en cours...
+                                </p>
+                                <div v-if="ready">
+                                    <apexchart ref="chart" width="100%" type="line" :options="options"
+                                               :series="filtered_stats_adm"></apexchart>
+                                </div>
+                            </b-col>
+                        </b-row>
+                    </b-tab>
                 </b-tabs>
             </b-card>
         </b-container>
@@ -97,11 +124,13 @@
                 prefix: utils.getPrefix(this.$route.params.prefix),
                 selected_serie: '',
                 selected_type: '',
+                selected_groupe: '',
                 choix_gen: ['', 'Total', 'Confirmés'],
                 selected_gen: '',
                 choix_formation: [],
                 selected_formation: null,
                 donnees: null,
+                admissions: null,
                 options: {
                     chart: {
                         id: 'stats-parcoursup',
@@ -134,6 +163,7 @@
                 series: [],
                 series_bac: [],
                 types_bac: [],
+                groupes: [],
                 stats_gen: [],
                 ready: false,
                 ready_gen: false,
@@ -142,9 +172,13 @@
         methods: {
             loadData: function () {
                 // noinspection JSUnresolvedVariable
-                let promise = axios.get(this.prefix + '/api/stats');
-                return promise.then(data => {
-                    this.donnees = data.data;
+                let promise = axios.all([
+                    axios.get(this.prefix + '/api/stats'),
+                    axios.get(this.prefix + '/api/admissions')
+                ]);
+                promise.then(axios.spread((stats, admissions) => {
+                    this.donnees = stats.data;
+                    this.admissions = admissions.data;
                     let formations = this.donnees.liste_f;
                     let choix_f_t = [];
                     this.choix_formation = choix_f_t;
@@ -156,12 +190,18 @@
                     this.extracted();
                     this.ready = true;
                     this.ready_gen = true;
-                }).catch(error => {
+                })).catch(error => {
                     console.log(error);
                 });
             },
             extracted: function () {
                 let stats = this.donnees.liste_stats[this.selected_formation];
+                let arr_groupes_t = this.admissions.liste_f[this.selected_formation][1];
+                let groupes_t = [];
+                for (let g in arr_groupes_t) {
+                    groupes_t.push({value: arr_groupes_t[g][0], text: arr_groupes_t[g][1]});
+                }
+                this.groupes = groupes_t;
                 let bacs = stats.data;
                 let t_series = [];
                 let t_series_bac = stats.series;
@@ -232,6 +272,9 @@
                     }
                 }
                 return t;
+            },
+            filtered_stats_adm: function() {
+                //TODO : filtrer par groupe
             }
         }
     }
