@@ -30,7 +30,6 @@ def upgrade():
     op.create_table('candidat',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nom', sa.String(), nullable=True),
-    sa.Column('prenom', sa.String(), nullable=True),
     sa.Column('profil', sa.String(), nullable=True),
     sa.Column('etablissement', sa.String(), nullable=True),
     sa.Column('ordreAppel', sa.Integer(), nullable=True),

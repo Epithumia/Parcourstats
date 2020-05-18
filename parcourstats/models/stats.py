@@ -130,8 +130,7 @@ class Candidat(Base):
     __tablename__ = 'candidat'
 
     id = Column(Integer, primary_key=True, doc="Identifiant (numéro de dossier) du candidat")
-    nom = Column(String, doc="Nom du candidat")
-    prenom = Column(String, doc="Prénom du candidat")
+    nom = Column(String, doc="Nom et prénom du candidat")
     profil = Column(String, doc="Profil parcoursup du candidat")
     etablissement = Column(String, doc="Etablissement d'origine du candidat")
     ordreAppel = Column(Integer, doc="Ordre d'appel Parcoursup")
