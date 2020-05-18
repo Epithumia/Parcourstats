@@ -335,6 +335,7 @@ def run(args):
                     element = WebDriverWait(browser, 90).until(
                         lambda x: x.find_element_by_link_text('Admissions'))
                     element.click()
+                    # TODO : lien ci-dessous
                     element = WebDriverWait(browser, 90).until(
                         lambda x: x.find_element_by_link_text('Semaine de contrôle et de vérification'))
                     element.click()

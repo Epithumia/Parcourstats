@@ -70,7 +70,7 @@
                             </b-col>
                         </b-row>
                     </b-tab>
-                    <b-tab title="Admissions">
+                    <b-tab title="Admissions" v-if="groupes.length>0">
                         <b-row class="text-center">
                             <b-col>
                                 <p v-if="!groupes">
@@ -81,9 +81,7 @@
                                 </b-form-select>
                             </b-col>
                             <b-col>
-
                             </b-col>
-
                         </b-row>
                         <b-row>
                             <b-col>
@@ -165,6 +163,7 @@
                 types_bac: [],
                 groupes: [],
                 stats_gen: [],
+                stats_adm: [],
                 ready: false,
                 ready_gen: false,
             }
@@ -197,11 +196,42 @@
             extracted: function () {
                 let stats = this.donnees.liste_stats[this.selected_formation];
                 let arr_groupes_t = this.admissions.liste_f[this.selected_formation][1];
+                let admissions = this.admissions.liste_stats[this.selected_formation];
                 let groupes_t = [];
+                let t_adm_etats = [];
+                let t_adm_decisions = [];
                 for (let g in arr_groupes_t) {
                     groupes_t.push({value: arr_groupes_t[g][0], text: arr_groupes_t[g][1]});
                 }
+                if (groupes_t.length>0) groupes_t.unshift({value:-1, text:'Total'});
+                for (let gr in admissions) {
+                    let entry = Object.entries(admissions[gr])[0];
+                    let t_gr = entry[0];
+                    let t_data = entry[1];
+                    let t_decisions = [];
+                    for (let k in t_data.decisions) {
+                        let s = [];
+                        for (let stamp in t_data.decisions[k]) {
+                            let date = new Date(stamp * 1);
+                            s.push([date, t_data.decisions[k][stamp]]);
+                        }
+                        t_decisions.push({name: 'Décision : ' + k, data: s});
+                    }
+                    t_adm_decisions.push({name: t_gr, data:t_decisions});
+                    let t_etats = [];
+                    for (let k in t_data.etats) {
+                        let s = [];
+                        for (let stamp in t_data.etats[k]) {
+                            let date = new Date(stamp * 1);
+                            s.push([date, t_data.etats[k][stamp]]);
+                        }
+                        t_etats.push({name: 'Etat : ' + k, data: s});
+                    }
+                    t_adm_etats.push({name: t_gr, data:t_etats});
+                }
+                this.stats_adm = {etat: t_adm_etats, decisions: t_adm_decisions};
                 this.groupes = groupes_t;
+                if (groupes_t.length > 0) this.selected_groupe = groupes_t[0].value;
                 let bacs = stats.data;
                 let t_series = [];
                 let t_series_bac = stats.series;
@@ -273,8 +303,25 @@
                 }
                 return t;
             },
-            filtered_stats_adm: function() {
-                //TODO : filtrer par groupe
+            filtered_stats_adm: function () {
+                let sel = '';
+                let t = [];
+                sel = this.selected_groupe;
+                if (this.stats_adm.etat.length > 0) {
+                    for (let row of this.stats_adm.etat) {
+                        if (row.name === sel.toString()) {
+                            for (let serie of row.data) t.push(serie);
+                        }
+                    }
+                }
+                if (this.stats_adm.decisions.length > 0) {
+                    for (let row of this.stats_adm.decisions){
+                        if (row.name === sel.toString()) {
+                            for (let serie of row.data) t.push(serie);
+                        }
+                    }
+                }
+                return t;
             }
         }
     }

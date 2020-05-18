@@ -56,7 +56,9 @@ def get_data(code, dbsession):
 
 
 def get_admissions(code, dbsession):
-    data_query = dbsession.query(StatAdmission).join(StatAdmission.candidat).filter(Candidat.id_groupe == code)
+    data_query = dbsession.query(StatAdmission).join(StatAdmission.candidat)
+    if code != '*':
+        data_query = data_query.filter(Candidat.id_groupe == code)
     data = read_sql(data_query.statement, data_query.session.bind)
     data.replace(to_replace='', value='-', inplace=True)
     data_decision = data.groupby(['decision', 'timestamp']).count().reset_index().pivot(index='timestamp',

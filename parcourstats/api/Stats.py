@@ -43,10 +43,14 @@ class ApiAdmissions(object):
         liste_f = {}
         liste_stats = {}
         for f in formations:
+            liste_admissions = []
             groupes = dbsession.query(Groupe).filter(Groupe.id_formation == f.Code).all()
             liste_groupes = [(x.code, x.libelle, x.places, x.nbAppel) for x in groupes]
             liste_f[f.Code] = (f.Nom, liste_groupes)
             for g in groupes:
-                liste_stats[g.code] = get_admissions(g.code, dbsession)
+                liste_admissions.append({g.code: get_admissions(g.code, dbsession)})
+            if len(groupes):
+                liste_admissions.append({-1: get_admissions('*', dbsession)})
+            liste_stats[f.Code] = liste_admissions
 
         return {'liste_f': liste_f, 'liste_stats': liste_stats}
