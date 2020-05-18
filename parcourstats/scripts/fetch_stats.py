@@ -3,6 +3,7 @@ import datetime
 import optparse
 
 import transaction
+from pandas import read_html
 from pyramid.paster import bootstrap, setup_logging, get_appsettings
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -286,7 +287,6 @@ def run(args):
                 # /html/body/div[2]/div[4]/div/div/div[3]/div/table/tbody/tr[1]/td[12]
                 if libelle != 'Total':
                     details = browser.find_element_by_xpath(fpath + str(n) + ']/td[12]')
-                    count = int(details.text)
                     details.click()
 
                     # /html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select/
@@ -296,40 +296,30 @@ def run(args):
                     sel = Select(element)
                     sel.select_by_visible_text('Tout')
                     # Get tous les candidats du groupe
-                    cpath = '/html/body/div[2]/div[5]/div/div[2]/div[3]/div/table/tbody/tr['
+                    tpath = '/html/body/div[2]/div[5]/div/div[2]/div[3]/div/table'
+                    table = browser.find_element_by_xpath(tpath)
+                    df = read_html(table.get_attribute('outerHTML'))
+                    d = df[0000]
+                    d = d.iloc[::2]
+                    d.columns = ['ordre', 'classement', 'date', 'id_candidat', 'nom', 'profil', 'etabl', 'etat',
+                                 'decision', 'dossier']
                     list_cand = dbsession.query(Candidat.id).filter(Candidat.id_groupe == code_groupe).all()
                     list_cand = [x[0] for x in list_cand]
-                    for ordre in range(1, count + 1):
-                        # /html/body/div[2]/div[5]/div/div[2]/div[3]/div/table/tbody/tr[1]/td[1]
-                        oa = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[1]').text
-                        rang = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[2]').text
-                        num_dos = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[4]').text
-                        nom = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[5]').text
-                        profil = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[6]').text
-                        etab = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[7]').text
-                        etat = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[8]').text
-                        decision = browser.find_element_by_xpath(cpath + str(ordre) + ']/td[9]').text
-                        if int(num_dos) not in list_cand:
-                            candidat = Candidat(id=int(num_dos), nom=nom, profil=profil, etablissement=etab,
-                                                ordreAppel=oa, classement=rang, id_groupe=code_groupe)
+                    for row in d[
+                        ['ordre', 'classement', 'id_candidat', 'nom', 'profil', 'etabl', 'etat', 'decision']].values:
+                        if int(row[2]) not in list_cand:
+                            candidat = Candidat(id=int(row[2]), nom=row[3], profil=row[4], etablissement=row[5],
+                                                ordreAppel=int(row[0]), classement=int(row[1]), id_groupe=code_groupe)
                             dbsession.add(candidat)
                             transaction.manager.commit()
-                        now = datetime.datetime.now()
-                        if now.time().hour < 6:
-                            prev = datetime.datetime(now.year, now.month, now.day)
-                        elif now.time().hour < 12:
-                            prev = datetime.datetime(now.year, now.month, now.day, 6, 0, 0)
-                        elif now.time().hour < 18:
-                            prev = datetime.datetime(now.year, now.month, now.day, 12, 0, 0)
-                        else:
-                            prev = datetime.datetime(now.year, now.month, now.day, 18, 0, 0)
-                        stat_adm = dbsession.query(StatAdmission).filter(StatAdmission.id_candidat == num_dos,
+                        stat_adm = dbsession.query(StatAdmission).filter(StatAdmission.id_candidat == int(row[2]),
                                                                          StatAdmission.timestamp == prev).first()
                         if stat_adm is None:
-                            stat_adm = StatAdmission(id_candidat=num_dos, timestamp=prev, etat=etat, decision=decision)
+                            stat_adm = StatAdmission(id_candidat=int(row[2]), timestamp=prev, etat=row[6],
+                                                     decision=row[7])
                         else:
-                            stat_adm.etat = etat
-                            stat_adm.decision = decision
+                            stat_adm.etat = row[6]
+                            stat_adm.decision = row[7]
                         dbsession.add(stat_adm)
                         transaction.manager.commit()
                     element = WebDriverWait(browser, 90).until(
