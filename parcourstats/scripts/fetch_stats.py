@@ -40,7 +40,7 @@ def run(args, opt):
         browser = webdriver.Chrome(chrome_options=chrome_options)
         try:
             browser.get('https://gestion.parcoursup.fr/Gestion')
-            element = WebDriverWait(browser, 90).until(lambda x: x.find_element_by_name('g_ea_cod'))
+            element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_name('g_ea_cod'))
             element.send_keys(login)
             element = browser.find_element_by_name('g_ea_mot_pas')
             element.send_keys(mdp)
@@ -56,9 +56,9 @@ def run(args, opt):
             else:
                 prev = datetime.datetime(now.year, now.month, now.day, 18, 0, 0)
             if opt.stats_gen:
-                element = WebDriverWait(browser, 90).until(lambda x: x.find_element_by_link_text('Candidatures'))
+                element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Candidatures'))
                 element.click()
-                element = WebDriverWait(browser, 180).until(lambda x: x.find_element_by_link_text('Statistiques'))
+                element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Statistiques'))
                 element.click()
                 ligne = 0
                 fpath = '/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr['
@@ -110,7 +110,7 @@ def run(args, opt):
                 sel = Select(element)
                 sel.select_by_visible_text('Total des voeux confirmés')
 
-                element = WebDriverWait(browser, 90).until(
+                element = WebDriverWait(browser, 300).until(
                     lambda x: x.find_element_by_xpath(fpath + str(ligne) + ']/td[7]'))
                 nb_voeux_confirmes = element.text
                 element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[9]')
@@ -145,11 +145,11 @@ def run(args, opt):
                 element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[13]/a')
                 element.click()
 
-                element = WebDriverWait(browser, 90).until(
+                element = WebDriverWait(browser, 300).until(
                     lambda x: x.find_element_by_id('choix_details_stats'))
                 sel = Select(element)
                 sel.select_by_visible_text('Total des voeux')
-                element = WebDriverWait(browser, 90).until(
+                element = WebDriverWait(browser, 300).until(
                     lambda x: x.find_element_by_id('choix_details_stats'))
                 sel = Select(element)
 
@@ -204,7 +204,7 @@ def run(args, opt):
                     pass
                 transaction.manager.commit()
                 sel.select_by_visible_text('Total des voeux confirmés')
-                WebDriverWait(browser, 90).until(
+                WebDriverWait(browser, 300).until(
                     lambda x: x.find_element_by_id('choix_details_stats'))
                 try:
                     details_confirmes = {}
@@ -254,10 +254,10 @@ def run(args, opt):
                     pass
 
             if opt.stats_adm:
-                element = WebDriverWait(browser, 180).until(
+                element = WebDriverWait(browser, 300).until(
                     lambda x: x.find_element_by_link_text('Admissions'))
                 element.click()
-                element = WebDriverWait(browser, 180).until(
+                element = WebDriverWait(browser, 300).until(
                     lambda x: x.find_element_by_link_text('Suivi des admissions'))
                 element.click()
                 fpath = '/html/body/div[2]/div[4]/div/div/div[3]/div/table/tbody/tr['
@@ -292,7 +292,7 @@ def run(args, opt):
                             details.click()
 
                             # /html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select/
-                            element = WebDriverWait(browser, 180).until(
+                            element = WebDriverWait(browser, 300).until(
                                 lambda x: x.find_element_by_xpath(
                                     '/html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select'))
                             sel = Select(element)
@@ -326,11 +326,11 @@ def run(args, opt):
                                     transaction.manager.commit()
                                 except ValueError:
                                     pass
-                            element = WebDriverWait(browser, 180).until(
+                            element = WebDriverWait(browser, 300).until(
                                 lambda x: x.find_element_by_link_text('Admissions'))
                             element.click()
                             # TODO : lien ci-dessous
-                            element = WebDriverWait(browser, 180).until(
+                            element = WebDriverWait(browser, 300).until(
                                 lambda x: x.find_element_by_link_text('Suivi des admissions'))
                             element.click()
 
