@@ -294,7 +294,7 @@ def run(args, opt):
                             transaction.manager.commit()
                         # /html/body/div[2]/div[4]/div/div/div[3]/div/table/tbody/tr[1]/td[12]
                         if libelle != 'Total':
-                            details = browser.find_element_by_xpath(fpath + str(n) + ']/td[19]')
+                            details = browser.find_element_by_xpath(fpath + str(n) + ']/td[20]')
                             details.click()
 
                             # /html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select/
