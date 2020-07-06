@@ -265,7 +265,7 @@ def run(args, opt):
                     lambda x: x.find_element_by_link_text('Suivi des admissions'))
                 element.click()
 
-                fpath = '/html/body/div[2]/div[4]/div/div/div[3]/div/table/tbody/tr['
+                fpath = '/html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/tbody/tr['
                 try:
                     for n in range(1, 50):
                         element2 = browser.find_element_by_xpath(fpath + str(n) + ']/td[2]')
