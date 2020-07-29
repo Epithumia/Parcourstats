@@ -264,6 +264,9 @@ def run(args, opt):
                 element = WebDriverWait(browser, 300).until(
                     lambda x: x.find_element_by_link_text('Suivi des admissions'))
                 element.click()
+                WebDriverWait(browser, 300).until(
+                    lambda x: x.find_element_by_xpath('/html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/thead/tr/th[1]/select')
+                )
 
                 fpath = '/html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/tbody/tr['
                 try:
