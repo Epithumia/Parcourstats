@@ -282,10 +282,10 @@
                 let t_series = [];
                 let sel_serie = '';
                 let sel_type = '';
-                if (this.selected_serie.length > 0) sel_serie = this.selected_serie;
+                if (this.selected_serie.length > 0) sel_serie = this.selected_serie + ' -';
                 if (this.selected_type.length > 0) sel_type = '- ' + this.selected_type + ' -';
                 for (let bac in this.series) {
-                    if (this.series[bac].name.includes(sel_serie) && this.series[bac].name.includes(sel_type)) {
+                    if (this.series[bac].name.startsWith(sel_serie) && this.series[bac].name.includes(sel_type)) {
                         t_series.push(this.series[bac]);
                     }
                 }
