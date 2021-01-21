@@ -15,6 +15,168 @@ from parcourstats.models import get_session_factory, get_tm_session, StatGeneral
     Formation, Groupe, Candidat, StatAdmission
 
 
+def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, prev, dbsession):
+    now = datetime.datetime.now()
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Candidats'))
+    element.click()
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+        '/html/body/div[2]/div[4]/div[2]/form[1]/table/tbody/tr[1]/td[2]/fieldset/legend/a[1]'))
+    element.click()
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+        '//*[@id="form_' + str(code) + '"]'))
+    element.click()
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+        '/html/body/div[2]/div[4]/div[2]/form[1]/table/tbody/tr[2]/td/table[2]/tbody/tr/td[2]/a'))
+    element.click()
+    element = WebDriverWait(browser, 300).until(
+        lambda x: x.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/form[2]/div/div[1]/div[2]/div/label/select'))
+    sel = Select(element)
+    sel.select_by_visible_text('Tout')
+
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+        '/html/body/div[2]/div[4]/div[2]/span'))
+    nb = int(element.text)
+    nb_voeux_confirmes = 0
+    liste = {}
+    for i in range(1, nb + 1):
+        element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+            '/html/body/div[2]/div[4]/div[2]/form[2]/div/div[3]/div/table/tbody/tr[' + str(i) + ']/td[1]'))
+        id_cand = int(element.text)
+        element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+            '/html/body/div[2]/div[4]/div[2]/form[2]/div/div[3]/div/table/tbody/tr[' + str(i) + ']/td[7]'))
+        liste[id_cand] = element.text
+        if element.text == 'Validée':
+            nb_voeux_confirmes += 1
+
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Groupes'))
+    element.click()
+    try:
+        element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath('//*[@id="retour"]'))
+        element.click()
+
+    except NoSuchElementException:
+        pass
+
+    ligne = 0
+    fpath = '/html/body/div[2]/div[4]/div/div[2]/div[3]/div/table/tbody/tr['
+    try:
+        for n in range(1, 50):
+            element1 = browser.find_element_by_xpath(fpath + str(n) + ']/td[1]')
+            element2 = browser.find_element_by_xpath(fpath + str(n) + ']/td[2]')
+            element3 = browser.find_element_by_xpath(fpath + str(n) + ']/td[3]')
+            element4 = browser.find_element_by_xpath(fpath + str(n) + ']/td[4]')
+            if (code and element4.text == code) or (
+                    element1.text == type_formation and
+                    element2.text == domaine and
+                    element3.text == mention):
+                ligne = n
+                code = element4.text
+                type_formation = element1.text
+                domaine = element2.text
+                mention = element3.text
+    except NoSuchElementException:
+        pass
+    if ligne == 0:
+        browser.close()
+        exit(1)
+
+    fo = dbsession.query(Formation).filter(Formation.code == code).first()
+    if fo is None:
+        fo = Formation(code=code)
+    fo.type_formation = type_formation
+    fo.etablissement = etbt
+    fo.domaine = domaine
+    fo.mention = mention
+    dbsession.add(fo)
+    transaction.manager.commit()
+
+    stat_gen_q = dbsession.query(StatGenerale).filter(StatGenerale.id_formation == code,
+                                                      StatGenerale.timestamp.between(prev, now)).first()
+    if stat_gen_q is None:
+        stat_gen_q = StatGenerale(id_formation=code)
+
+    stat_gen_q.nb_voeux_total = nb
+    stat_gen_q.nb_voeux_confirmes = nb_voeux_confirmes
+
+    stat_gen_q.timestamp = prev
+
+    dbsession.add(stat_gen_q)
+    transaction.manager.commit()
+
+    bpath = '/html/body/div[2]/div[4]/div/div[2]/div[3]/div/table/tbody/tr[' + str(
+        ligne) + ']/td[6]/table/tbody/tr/td[2]/a'
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+        bpath))
+    element.click()
+
+    WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath('//*[@id="main"]'))
+    for i in range(2, 50):
+        gpath = '/html/body/div[2]/div[5]/div[2]/table/tbody/tr[' + str(i) + ']/td['
+        try:
+            libelle = browser.find_element_by_xpath(gpath + '1]').text
+            lien = browser.find_element_by_xpath(gpath + '3]/a')
+            nb_voeux_gr = int(lien.text)
+            url = lien.get_attribute('href')
+            code_groupe = int(url.split("=")[-1])
+
+            lien.click()
+            element = WebDriverWait(browser, 300).until(
+                lambda x: x.find_element_by_xpath(
+                    '/html/body/div[2]/div[5]/div/div[3]/div/div[1]/div[2]/div/label/select'))
+            sel = Select(element)
+            sel.select_by_visible_text('Tout')
+
+            stats_gr = {}
+            for i in range(1, nb_voeux_gr + 1):
+                rpath = '/html/body/div[2]/div[5]/div/div[3]/div/div[3]/div/table/tbody/tr[' + str(i) + ']/td['
+                id_cand = int(browser.find_element_by_xpath(rpath + '1]').text)
+                serie_bac = browser.find_element_by_xpath(rpath + '4]').text
+                if serie_bac not in stats_gr:
+                    stats_gr[serie_bac] = {'nb_voeux': 0, 'nb_voeux_confirmes': 0}
+                stats_gr[serie_bac]['nb_voeux'] += 1
+                if liste[id_cand] == 'Validée':
+                    stats_gr[serie_bac]['nb_voeux_confirmes'] += 1
+
+            for serie_bac in stats_gr.keys():
+                typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == libelle).first()
+                if typebac_q is None:
+                    typebac_q = TypeBac()
+                    typebac_q.nom = libelle
+                    typebac_q.id = code_groupe
+                    dbsession.add(typebac_q)
+                    transaction.manager.commit()
+                typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == libelle).first()
+                tid = typebac_q.id
+                seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+                if seriebac_q is None:
+                    seriebac_q = SerieBac()
+                    seriebac_q.nom = serie_bac
+                    dbsession.add(seriebac_q)
+                    transaction.manager.commit()
+                seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+                sid = seriebac_q.id
+                stat = dbsession.query(StatDetail).filter(StatDetail.id_typebac == tid,
+                                                          StatDetail.id_serie == sid,
+                                                          StatDetail.timestamp == prev,
+                                                          StatGenerale.id_formation == code).first()
+                if stat is None:
+                    stat = StatDetail(id_typebac=tid, id_serie=sid, timestamp=prev,
+                                      total=0,
+                                      confirmes=0, id_formation=code)
+                stat.total = stats_gr[serie_bac]['nb_voeux']
+                stat.confirmes = stats_gr[serie_bac]['nb_voeux_confirmes']
+                dbsession.add(stat)
+                transaction.manager.commit()
+
+            back = browser.find_element_by_xpath('/html/body/div[2]/div[5]/div/a')
+            back.click()
+        except NoSuchElementException:
+            pass
+
+    browser.close()
+    exit(1)
+
+
 def run(args, opt):
     config_uri = args[0]
     with bootstrap(config_uri):
@@ -31,7 +193,7 @@ def run(args, opt):
         sf = get_session_factory(engine)
         dbsession = get_tm_session(sf, transaction.manager)
         options = webdriver.FirefoxOptions()
-        #chrome_options.add_argument("--window-size=1920,1080")
+        # chrome_options.add_argument("--window-size=1920,1080")
         options.add_argument("--disable-infobars")
         options.add_argument("--disable-extensions")
         options.add_argument("--headless")
@@ -39,8 +201,8 @@ def run(args, opt):
         options.add_argument("--no-sandbox")
         options.add_argument("--width=1920")
         options.add_argument("--height=1200")
-        #chrome_options.add_argument("--user-data-dir=./chromedriverprofile")
-        #browser = webdriver.Chrome(chrome_options=chrome_options)
+        # chrome_options.add_argument("--user-data-dir=./chromedriverprofile")
+        # browser = webdriver.Chrome(chrome_options=chrome_options)
         browser = webdriver.Firefox(firefox_options=options)
         try:
             browser.get('https://gestion.parcoursup.fr/Gestion')
@@ -87,175 +249,179 @@ def run(args, opt):
                 except NoSuchElementException:
                     pass
                 if ligne == 0:
-                    print('Formation inconnue')
-                    browser.close()
-                    exit(1)
-                fo = dbsession.query(Formation).filter(Formation.code == code).first()
-                if fo is None:
-                    fo = Formation(code=code)
-                fo.type_formation = type_formation
-                fo.etablissement = etbt
-                fo.domaine = domaine
-                fo.mention = mention
-                dbsession.add(fo)
-                transaction.manager.commit()
-                element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[7]')
-                nb_voeux_total = element.text
-                element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[9]')
-                nb_filles_total = element.text
-                element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[10]')
-                nb_garcons_total = element.text
-                element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[11]')
-                nb_boursiers_total = element.text
-                element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[12]')
-                nb_non_boursiers_total = element.text
+                    do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, prev, dbsession)
+                    # print('Formation inconnue')
+                    # browser.close()
+                    # exit(1)
+                else:
+                    fo = dbsession.query(Formation).filter(Formation.code == code).first()
+                    if fo is None:
+                        fo = Formation(code=code)
+                    fo.type_formation = type_formation
+                    fo.etablissement = etbt
+                    fo.domaine = domaine
+                    fo.mention = mention
+                    dbsession.add(fo)
+                    transaction.manager.commit()
+                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[7]')
+                    nb_voeux_total = element.text
+                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[9]')
+                    nb_filles_total = element.text
+                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[10]')
+                    nb_garcons_total = element.text
+                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[11]')
+                    nb_boursiers_total = element.text
+                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[12]')
+                    nb_non_boursiers_total = element.text
 
-                element = browser.find_element_by_id('choix_stats')
-                sel = Select(element)
-                sel.select_by_visible_text('Total des voeux confirmés')
+                    element = browser.find_element_by_id('choix_stats')
+                    sel = Select(element)
+                    sel.select_by_visible_text('Total des voeux confirmés')
 
-                element = WebDriverWait(browser, 300).until(
-                    lambda x: x.find_element_by_xpath(fpath + str(ligne) + ']/td[7]'))
-                nb_voeux_confirmes = element.text
-                element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[9]')
-                nb_filles_confirmes = element.text
-                element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[10]')
-                nb_garcons_confirmes = element.text
-                element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[11]')
-                nb_boursiers_confirmes = element.text
-                element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[12]')
-                nb_non_boursiers_confirmes = element.text
+                    element = WebDriverWait(browser, 300).until(
+                        lambda x: x.find_element_by_xpath(fpath + str(ligne) + ']/td[7]'))
+                    nb_voeux_confirmes = element.text
+                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[9]')
+                    nb_filles_confirmes = element.text
+                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[10]')
+                    nb_garcons_confirmes = element.text
+                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[11]')
+                    nb_boursiers_confirmes = element.text
+                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[12]')
+                    nb_non_boursiers_confirmes = element.text
 
-                stat_gen_q = dbsession.query(StatGenerale).filter(StatGenerale.id_formation == code,
-                                                                  StatGenerale.timestamp.between(prev, now)).first()
-                if stat_gen_q is None:
-                    stat_gen_q = StatGenerale(id_formation=code)
+                    stat_gen_q = dbsession.query(StatGenerale).filter(StatGenerale.id_formation == code,
+                                                                      StatGenerale.timestamp.between(prev, now)).first()
+                    if stat_gen_q is None:
+                        stat_gen_q = StatGenerale(id_formation=code)
 
-                stat_gen_q.nb_voeux_total = nb_voeux_total
-                stat_gen_q.nb_voeux_confirmes = nb_voeux_confirmes
-                stat_gen_q.nb_boursiers_confirmes = nb_boursiers_confirmes
-                stat_gen_q.nb_boursiers_total = nb_boursiers_total
-                stat_gen_q.nb_filles_confirmes = nb_filles_confirmes
-                stat_gen_q.nb_filles_total = nb_filles_total
-                stat_gen_q.nb_garcons_confirmes = nb_garcons_confirmes
-                stat_gen_q.nb_garcons_total = nb_garcons_total
-                stat_gen_q.nb_non_boursiers_confirmes = nb_non_boursiers_confirmes
-                stat_gen_q.nb_non_boursiers_total = nb_non_boursiers_total
-                stat_gen_q.timestamp = prev
+                    stat_gen_q.nb_voeux_total = nb_voeux_total
+                    stat_gen_q.nb_voeux_confirmes = nb_voeux_confirmes
+                    stat_gen_q.nb_boursiers_confirmes = nb_boursiers_confirmes
+                    stat_gen_q.nb_boursiers_total = nb_boursiers_total
+                    stat_gen_q.nb_filles_confirmes = nb_filles_confirmes
+                    stat_gen_q.nb_filles_total = nb_filles_total
+                    stat_gen_q.nb_garcons_confirmes = nb_garcons_confirmes
+                    stat_gen_q.nb_garcons_total = nb_garcons_total
+                    stat_gen_q.nb_non_boursiers_confirmes = nb_non_boursiers_confirmes
+                    stat_gen_q.nb_non_boursiers_total = nb_non_boursiers_total
+                    stat_gen_q.timestamp = prev
 
-                dbsession.add(stat_gen_q)
-                transaction.manager.commit()
+                    dbsession.add(stat_gen_q)
+                    transaction.manager.commit()
 
-                element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[13]/a')
-                element.click()
+                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[13]/a')
+                    element.click()
 
-                element = WebDriverWait(browser, 300).until(
-                    lambda x: x.find_element_by_id('choix_details_stats'))
-                sel = Select(element)
-                sel.select_by_visible_text('Total des voeux')
-                element = WebDriverWait(browser, 300).until(
-                    lambda x: x.find_element_by_id('choix_details_stats'))
-                sel = Select(element)
+                    element = WebDriverWait(browser, 300).until(
+                        lambda x: x.find_element_by_id('choix_details_stats'))
+                    sel = Select(element)
+                    sel.select_by_visible_text('Total des voeux')
+                    element = WebDriverWait(browser, 300).until(
+                        lambda x: x.find_element_by_id('choix_details_stats'))
+                    sel = Select(element)
 
-                path = '/html/body/div[2]/div[4]/div/div[2]/div[3]/div/table/tbody/tr['
-                try:
-                    details_total = {}
-                    for i in range(1, 30):
-                        j = 1
-                        xpath = path + str(i) + ']/td[' + str(j) + ']'
-                        cell = browser.find_element_by_xpath(xpath)
-                        serie_bac = cell.text
-                        if serie_bac not in details_total.keys():
-                            details_total[serie_bac] = {}
-                        seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+                    path = '/html/body/div[2]/div[4]/div/div[2]/div[3]/div/table/tbody/tr['
+                    try:
+                        details_total = {}
+                        for i in range(1, 30):
+                            j = 1
+                            xpath = path + str(i) + ']/td[' + str(j) + ']'
+                            cell = browser.find_element_by_xpath(xpath)
+                            serie_bac = cell.text
+                            if serie_bac not in details_total.keys():
+                                details_total[serie_bac] = {}
+                            seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
 
-                        if seriebac_q is None:
-                            seriebac_q = SerieBac()
-                            seriebac_q.nom = serie_bac
-                            dbsession.add(seriebac_q)
+                            if seriebac_q is None:
+                                seriebac_q = SerieBac()
+                                seriebac_q.nom = serie_bac
+                                dbsession.add(seriebac_q)
+                                transaction.manager.commit()
+
+                            j = 2
+                            xpath = path + str(i) + ']/td[' + str(j) + ']'
+                            cell = browser.find_element_by_xpath(xpath)
+                            type_bac = cell.text
+                            typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
+
+                            if typebac_q is None:
+                                typebac_q = TypeBac()
+                                typebac_q.nom = type_bac
+                                dbsession.add(typebac_q)
+                                transaction.manager.commit()
+                            j = 3
+                            xpath = path + str(i) + ']/td[' + str(j) + ']'
+                            cell = browser.find_element_by_xpath(xpath)
+                            nb_voeux_serie_type = cell.text
+                            details_total[serie_bac][type_bac] = nb_voeux_serie_type
+                            typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
+                            seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+                            stat = dbsession.query(StatDetail).filter(StatDetail.id_typebac == typebac_q.id,
+                                                                      StatDetail.id_serie == seriebac_q.id,
+                                                                      StatDetail.timestamp == prev,
+                                                                      StatDetail.id_formation == code).first()
+                            if stat is None:
+                                stat = StatDetail(id_typebac=typebac_q.id, id_serie=seriebac_q.id, timestamp=prev,
+                                                  total=0,
+                                                  confirmes=0, id_formation=code)
+                            stat.total = nb_voeux_serie_type
+                            dbsession.add(stat)
                             transaction.manager.commit()
 
-                        j = 2
-                        xpath = path + str(i) + ']/td[' + str(j) + ']'
-                        cell = browser.find_element_by_xpath(xpath)
-                        type_bac = cell.text
-                        typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
+                    except NoSuchElementException:
+                        pass
+                    transaction.manager.commit()
+                    sel.select_by_visible_text('Total des voeux confirmés')
+                    WebDriverWait(browser, 300).until(
+                        lambda x: x.find_element_by_id('choix_details_stats'))
+                    try:
+                        details_confirmes = {}
+                        for i in range(1, 30):
+                            j = 1
+                            xpath = path + str(i) + ']/td[' + str(j) + ']'
+                            cell = browser.find_element_by_xpath(xpath)
+                            serie_bac = cell.text
+                            if serie_bac not in details_confirmes.keys():
+                                details_confirmes[serie_bac] = {}
+                            seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
 
-                        if typebac_q is None:
-                            typebac_q = TypeBac()
-                            typebac_q.nom = type_bac
-                            dbsession.add(typebac_q)
+                            if seriebac_q is None:
+                                seriebac_q = SerieBac()
+                                seriebac_q.nom = serie_bac
+                                dbsession.add(seriebac_q)
+                                transaction.manager.commit()
+                            j = 2
+                            xpath = path + str(i) + ']/td[' + str(j) + ']'
+                            cell = browser.find_element_by_xpath(xpath)
+                            type_bac = cell.text
+                            typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
+
+                            if typebac_q is None:
+                                typebac_q = SerieBac()
+                                typebac_q.nom = type_bac
+                                dbsession.add(typebac_q)
+                                transaction.manager.commit()
+                            j = 3
+                            xpath = path + str(i) + ']/td[' + str(j) + ']'
+                            cell = browser.find_element_by_xpath(xpath)
+                            nb_voeux_serie_type = cell.text
+                            details_confirmes[serie_bac][type_bac] = nb_voeux_serie_type
+                            typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
+                            seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+                            stat = dbsession.query(StatDetail).filter(StatDetail.id_typebac == typebac_q.id,
+                                                                      StatDetail.id_serie == seriebac_q.id,
+                                                                      StatDetail.timestamp == prev,
+                                                                      StatGenerale.id_formation == code).first()
+                            if stat is None:
+                                stat = StatDetail(id_typebac=typebac_q.id, id_serie=seriebac_q.id, timestamp=prev,
+                                                  total=0,
+                                                  confirmes=0, id_formation=code)
+                            stat.confirmes = nb_voeux_serie_type
+                            dbsession.add(stat)
                             transaction.manager.commit()
-                        j = 3
-                        xpath = path + str(i) + ']/td[' + str(j) + ']'
-                        cell = browser.find_element_by_xpath(xpath)
-                        nb_voeux_serie_type = cell.text
-                        details_total[serie_bac][type_bac] = nb_voeux_serie_type
-                        typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
-                        seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
-                        stat = dbsession.query(StatDetail).filter(StatDetail.id_typebac == typebac_q.id,
-                                                                  StatDetail.id_serie == seriebac_q.id,
-                                                                  StatDetail.timestamp == prev,
-                                                                  StatDetail.id_formation == code).first()
-                        if stat is None:
-                            stat = StatDetail(id_typebac=typebac_q.id, id_serie=seriebac_q.id, timestamp=prev, total=0,
-                                              confirmes=0, id_formation=code)
-                        stat.total = nb_voeux_serie_type
-                        dbsession.add(stat)
-                        transaction.manager.commit()
-
-                except NoSuchElementException:
-                    pass
-                transaction.manager.commit()
-                sel.select_by_visible_text('Total des voeux confirmés')
-                WebDriverWait(browser, 300).until(
-                    lambda x: x.find_element_by_id('choix_details_stats'))
-                try:
-                    details_confirmes = {}
-                    for i in range(1, 30):
-                        j = 1
-                        xpath = path + str(i) + ']/td[' + str(j) + ']'
-                        cell = browser.find_element_by_xpath(xpath)
-                        serie_bac = cell.text
-                        if serie_bac not in details_confirmes.keys():
-                            details_confirmes[serie_bac] = {}
-                        seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
-
-                        if seriebac_q is None:
-                            seriebac_q = SerieBac()
-                            seriebac_q.nom = serie_bac
-                            dbsession.add(seriebac_q)
-                            transaction.manager.commit()
-                        j = 2
-                        xpath = path + str(i) + ']/td[' + str(j) + ']'
-                        cell = browser.find_element_by_xpath(xpath)
-                        type_bac = cell.text
-                        typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
-
-                        if typebac_q is None:
-                            typebac_q = SerieBac()
-                            typebac_q.nom = type_bac
-                            dbsession.add(typebac_q)
-                            transaction.manager.commit()
-                        j = 3
-                        xpath = path + str(i) + ']/td[' + str(j) + ']'
-                        cell = browser.find_element_by_xpath(xpath)
-                        nb_voeux_serie_type = cell.text
-                        details_confirmes[serie_bac][type_bac] = nb_voeux_serie_type
-                        typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
-                        seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
-                        stat = dbsession.query(StatDetail).filter(StatDetail.id_typebac == typebac_q.id,
-                                                                  StatDetail.id_serie == seriebac_q.id,
-                                                                  StatDetail.timestamp == prev,
-                                                                  StatGenerale.id_formation == code).first()
-                        if stat is None:
-                            stat = StatDetail(id_typebac=typebac_q.id, id_serie=seriebac_q.id, timestamp=prev, total=0,
-                                              confirmes=0, id_formation=code)
-                        stat.confirmes = nb_voeux_serie_type
-                        dbsession.add(stat)
-                        transaction.manager.commit()
-                except NoSuchElementException:
-                    pass
+                    except NoSuchElementException:
+                        pass
 
             if opt.stats_adm:
                 element = WebDriverWait(browser, 300).until(
@@ -265,7 +431,8 @@ def run(args, opt):
                     lambda x: x.find_element_by_link_text('Suivi des admissions'))
                 element.click()
                 WebDriverWait(browser, 300).until(
-                    lambda x: x.find_element_by_xpath('/html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/thead/tr/th[1]/select')
+                    lambda x: x.find_element_by_xpath(
+                        '/html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/thead/tr/th[1]/select')
                 )
 
                 fpath = '/html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/tbody/tr['
@@ -317,15 +484,19 @@ def run(args, opt):
                             list_cand = dbsession.query(Candidat.id).filter(Candidat.id_groupe == code_groupe).all()
                             list_cand = [x[0] for x in list_cand]
                             for row in d[
-                                ['ordre', 'classement', 'id_candidat', 'nom', 'profil', 'etabl', 'etat', 'decision']].values:
+                                ['ordre', 'classement', 'id_candidat', 'nom', 'profil', 'etabl', 'etat',
+                                 'decision']].values:
                                 try:
                                     if int(row[2]) not in list_cand:
-                                        candidat = Candidat(id=int(row[2]), nom=row[3], profil=row[4], etablissement=row[5],
-                                                            ordreAppel=int(row[0]), classement=int(row[1]), id_groupe=code_groupe)
+                                        candidat = Candidat(id=int(row[2]), nom=row[3], profil=row[4],
+                                                            etablissement=row[5],
+                                                            ordreAppel=int(row[0]), classement=int(row[1]),
+                                                            id_groupe=code_groupe)
                                         dbsession.add(candidat)
                                         transaction.manager.commit()
-                                    stat_adm = dbsession.query(StatAdmission).filter(StatAdmission.id_candidat == int(row[2]),
-                                                                                     StatAdmission.timestamp == prev).first()
+                                    stat_adm = dbsession.query(StatAdmission).filter(
+                                        StatAdmission.id_candidat == int(row[2]),
+                                        StatAdmission.timestamp == prev).first()
                                     if stat_adm is None:
                                         stat_adm = StatAdmission(id_candidat=int(row[2]), timestamp=prev, etat=row[6],
                                                                  decision=row[7])

@@ -20,7 +20,7 @@ sudo wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-ke
 sudo apt-get update
 sudo apt-get install -qq bsdtar google-chrome-stable
 ```
-- Le ChromeDriver approprié
+- Le ChromeDriver approprié (ou FirefoxDriver)
 ```
 PLATFORM=linux64
 VERSION=$(curl http://chromedriver.storage.googleapis.com/LATEST_RELEASE)
