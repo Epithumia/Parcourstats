@@ -3,7 +3,7 @@ from sqlalchemy import (
     Integer,
     String,
     DateTime,
-    ForeignKey)
+    ForeignKey, Table)
 from sqlalchemy.orm import (
     relationship,
     backref)
@@ -142,6 +142,73 @@ class Candidat(Base):
                           doc="Relation vers :class:`.Groupe`")
 
 
+options_voeux = Table('options_voeux', Base.metadata,
+                      Column('id_voeu', Integer, ForeignKey('voeu.id')),
+                      Column('id_optionbac', Integer, ForeignKey('optionbac.id'))
+                      )
+
+specialites_voeux = Table('specialites_voeux', Base.metadata,
+                          Column('id_voeu', Integer, ForeignKey('voeu.id')),
+                          Column('id_specialitebac', Integer, ForeignKey('specialitebac.id'))
+                          )
+
+
+class Voeu(Base):
+    """
+    Canddiat
+
+    Données de base sur chaque candidat
+    """
+    __tablename__ = 'voeu'
+
+    id = Column(Integer, primary_key=True, doc="Identifiant (numéro de dossier) du candidat")
+    nom = Column(String, doc="Nom du candidat")
+    prenom = Column(String, doc="Nom du candidat")
+    etablissement = Column(String, doc="Etablissement d'origine du candidat")
+
+    options = relationship(
+        "Option",
+        secondary=options_voeux,
+        back_populates="voeux")
+
+    specialites = relationship(
+        "Specialite",
+        secondary=specialites_voeux,
+        back_populates="voeux")
+
+
+class Option(Base):
+    """
+    Option du bac
+    """
+    __tablename__ = 'optionbac'
+
+    id = Column(Integer, primary_key=True, autoincrement=True, doc="Identifiant de l'option")
+    nom = Column(String, doc="Nom de l'option")
+    description = Column(String, doc="Description de l'option")
+
+    voeux = relationship(
+        "Voeu",
+        secondary=options_voeux,
+        back_populates="options")
+
+
+class Specialite(Base):
+    """
+    Option du bac
+    """
+    __tablename__ = 'specialitebac'
+
+    id = Column(Integer, primary_key=True, autoincrement=True, doc="Identifiant de l'option")
+    nom = Column(String, doc="Nom de la spécialité")
+    description = Column(String, doc="Description de la spécialité")
+
+    voeux = relationship(
+        "Voeu",
+        secondary=specialites_voeux,
+        back_populates="specialites")
+
+
 class StatAdmission(Base):
     """
     StatAdmission
@@ -158,4 +225,18 @@ class StatAdmission(Base):
     decision = Column(String, doc="Décision du candidat")
 
     candidat = relationship("Candidat", backref=backref("statsadmissions", cascade='all'), foreign_keys=[id_candidat],
-                          doc="Relation vers :class:`.Candidat`")
+                            doc="Relation vers :class:`.Candidat`")
+
+class StatSpecialites(Base):
+    """
+    StatDetail
+
+    Représente les données globales
+    """
+    __tablename__ = 'statspecialite'
+    id_specialite = Column(Integer, ForeignKey('specialitebac.id'), primary_key=True,
+                          doc="Identifiant de la spécialité. Fait partie de la clef primaire.")
+    timestamp = Column(DateTime, primary_key=True,
+                       doc="Date et heure de récupération. Fait partie de la clef primaire.")
+
+    nb_voeux = Column(Integer, default=0, doc="Nombre de voeux total.")

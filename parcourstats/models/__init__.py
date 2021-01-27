@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker, configure_mappers
 
 from parcourstats.models.acl import Special, User  # noqa
 from parcourstats.models.stats import StatDetail, TypeBac, SerieBac, StatGenerale, Formation, Groupe, Candidat, \
-    StatAdmission  # noqa
+    StatAdmission, StatSpecialites, Option, Specialite, Voeu  # noqa
 
 # import or define all models here to ensure they are attached to the
 # Base.metadata prior to any initialization routines

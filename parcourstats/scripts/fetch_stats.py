@@ -12,7 +12,10 @@ from selenium.webdriver.support.wait import WebDriverWait
 from sqlalchemy import engine_from_config
 
 from parcourstats.models import get_session_factory, get_tm_session, StatGenerale, SerieBac, TypeBac, StatDetail, \
-    Formation, Groupe, Candidat, StatAdmission
+    Formation, Groupe, Candidat, StatAdmission, Specialite, Option, Voeu, StatSpecialites
+
+LISTE_SPES = []
+LISTE_OPTIONS = []
 
 
 def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, prev, dbsession):
@@ -77,8 +80,7 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
     except NoSuchElementException:
         pass
     if ligne == 0:
-        browser.close()
-        exit(1)
+        return None
 
     fo = dbsession.query(Formation).filter(Formation.code == code).first()
     if fo is None:
@@ -109,6 +111,8 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
         bpath))
     element.click()
 
+    stats_spe = {}
+
     WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath('//*[@id="main"]'))
     for i in range(2, 50):
         gpath = '/html/body/div[2]/div[5]/div[2]/table/tbody/tr[' + str(i) + ']/td['
@@ -127,15 +131,112 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
             sel.select_by_visible_text('Tout')
 
             stats_gr = {}
+            WebDriverWait(browser, 300).until(
+                lambda x: x.find_element_by_xpath('//*[@id="dossier_GROUPE_' + str(code_groupe) + '_btn_reinitialiser"]'))
             for i in range(1, nb_voeux_gr + 1):
                 rpath = '/html/body/div[2]/div[5]/div/div[3]/div/div[3]/div/table/tbody/tr[' + str(i) + ']/td['
                 id_cand = int(browser.find_element_by_xpath(rpath + '1]').text)
+                nom_cand = browser.find_element_by_xpath(rpath + '2]').text
+                prenom_cand = browser.find_element_by_xpath(rpath + '3]').text
                 serie_bac = browser.find_element_by_xpath(rpath + '4]').text
+
+                voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
+                if voeu is None:
+                    voeu = Voeu(id=id_cand, nom=nom_cand, prenom=prenom_cand)
+                    dbsession.add(voeu)
+                    transaction.manager.commit()
+                voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
+
                 if serie_bac not in stats_gr:
                     stats_gr[serie_bac] = {'nb_voeux': 0, 'nb_voeux_confirmes': 0}
                 stats_gr[serie_bac]['nb_voeux'] += 1
                 if liste[id_cand] == 'Validée':
                     stats_gr[serie_bac]['nb_voeux_confirmes'] += 1
+                if voeu.etablissement is not None and len(voeu.options) == 0 and len(voeu.specialites) == 0:
+                    main_window = browser.current_window_handle
+                    el = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+                        '//*[@id="dossier_GROUPE_' + str(code_groupe) + '_filtre_0"]'))
+                    el.clear()
+                    el.send_keys(str(id_cand))
+                    el = browser.find_element_by_link_text(str(id_cand))
+                    el.click()
+                    browser.switch_to_window(browser.window_handles[1])
+                    el = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Scolarité'))
+                    el.click()
+                    WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath('//*[@id="content-scolarite"]'))
+                    for ligne_scol in range(1, 50):
+                        scopath = '/html/body/div[4]/div[4]/div/div[3]/table/tbody/tr['  # 1]/td[2]'
+                        try:
+                            niv = browser.find_element_by_xpath(scopath + str(ligne_scol) + ']/td[2]').text
+                            etbt = browser.find_element_by_xpath(scopath + str(ligne_scol) + ']/td[4]').text
+                            opts = browser.find_element_by_xpath(scopath + str(ligne_scol) + ']/td[5]').text.split('\n')
+                            if ligne_scol == 1:
+                                voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
+                                voeu.etablissement = etbt
+                                dbsession.add(voeu)
+                            if niv in 'Terminale':
+                                for opt in opts:
+                                    transaction.manager.commit()
+                                    if opt in LISTE_OPTIONS or len(LISTE_OPTIONS) == 0:
+                                        loption = dbsession.query(Option).filter(Option.nom == opt + ' (T)').first()
+                                        if loption is None:
+                                            loption = Option(nom=opt + ' (T)')
+                                            dbsession.add(loption)
+                                            transaction.manager.commit()
+                                        loption = dbsession.query(Option).filter(Option.nom == opt + ' (T)').first()
+                                        voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
+                                        voeu.options.append(loption)
+                                    if opt in LISTE_SPES or len(LISTE_SPES) == 0:
+                                        laspe = dbsession.query(Specialite).filter(
+                                            Specialite.nom == opt + ' (T)').first()
+                                        if laspe is None:
+                                            laspe = Specialite(nom=opt + ' (T)')
+                                            dbsession.add(laspe)
+                                            transaction.manager.commit()
+                                        laspe = dbsession.query(Specialite).filter(
+                                            Specialite.nom == opt + ' (T)').first()
+                                        voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
+                                        voeu.specialites.append(laspe)
+                            if niv == 'Première':
+                                for opt in opts:
+                                    if opt in LISTE_OPTIONS or len(LISTE_OPTIONS) == 0:
+                                        loption = dbsession.query(Option).filter(Option.nom == opt + ' (P)').first()
+                                        if loption is None:
+                                            loption = Option(nom=opt + ' (P)')
+                                            dbsession.add(loption)
+                                            transaction.manager.commit()
+                                        loption = dbsession.query(Option).filter(Option.nom == opt + ' (P)').first()
+                                        voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
+                                        voeu.options.append(loption)
+                                    if opt in LISTE_SPES or len(LISTE_SPES) == 0:
+                                        laspe = dbsession.query(Specialite).filter(
+                                            Specialite.nom == opt + ' (P)').first()
+                                        if laspe is None:
+                                            laspe = Specialite(nom=opt + ' (P)')
+                                            dbsession.add(laspe)
+                                            transaction.manager.commit()
+                                        laspe = dbsession.query(Specialite).filter(
+                                            Specialite.nom == opt + ' (P)').first()
+                                        voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
+                                        voeu.specialites.append(laspe)
+                        except NoSuchElementException:
+                            pass
+                    browser.close()
+                    browser.switch_to_window(main_window)
+                    el = WebDriverWait(browser, 300).until(
+                        lambda x: x.find_element_by_xpath(
+                            '//*[@id="dossier_GROUPE_' + str(code_groupe) + '_filtre_0"]'))
+                    el.clear()
+
+                dbsession.add(voeu)
+                transaction.manager.commit()
+
+                voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
+                for spe in voeu.specialites:
+                    if spe.id not in stats_spe.keys():
+                        stats_spe[spe.id] = 0
+                    stats_spe[spe.id] += 1
+
 
             for serie_bac in stats_gr.keys():
                 typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == libelle).first()
@@ -173,8 +274,14 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
         except NoSuchElementException:
             pass
 
-    browser.close()
-    exit(1)
+    for spe in stats_spe.keys():
+        stat = dbsession.query(StatSpecialites).filter(StatSpecialites.id_specialite == spe,
+                                                  StatSpecialites.timestamp == prev).first()
+        if stat is None:
+            stat = StatSpecialites(id_specialite=spe, timestamp=prev)
+        stat.nb_voeux=stats_spe[spe]
+        dbsession.add(stat)
+        transaction.manager.commit()
 
 
 def run(args, opt):
@@ -196,7 +303,7 @@ def run(args, opt):
         # chrome_options.add_argument("--window-size=1920,1080")
         options.add_argument("--disable-infobars")
         options.add_argument("--disable-extensions")
-        options.add_argument("--headless")
+        # options.add_argument("--headless")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--no-sandbox")
         options.add_argument("--width=1920")
@@ -222,6 +329,12 @@ def run(args, opt):
             else:
                 prev = datetime.datetime(now.year, now.month, now.day, 18, 0, 0)
             if opt.stats_gen:
+
+                element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Candidatures'))
+                element.click()
+
+                do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, prev, dbsession)
+
                 element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Candidatures'))
                 element.click()
                 element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Statistiques'))
@@ -248,12 +361,9 @@ def run(args, opt):
                             mention = element4.text
                 except NoSuchElementException:
                     pass
-                if ligne == 0:
-                    do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, prev, dbsession)
-                    # print('Formation inconnue')
-                    # browser.close()
-                    # exit(1)
-                else:
+
+                if ligne > 0:
+
                     fo = dbsession.query(Formation).filter(Formation.code == code).first()
                     if fo is None:
                         fo = Formation(code=code)
@@ -445,7 +555,7 @@ def run(args, opt):
                     pass
                 if ligne == 0:
                     print('Formation inconnue')
-                    browser.close()
+                    browser.quit()
                     exit(1)
 
                 try:
@@ -520,7 +630,7 @@ def run(args, opt):
             browser.close()
         except TimeoutException:
             browser.save_screenshot('exception.png')
-            browser.close()
+            browser.quit()
             exit(2)
 
 

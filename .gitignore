@@ -170,3 +170,5 @@ dmypy.json
 /parcourstats/static/docs/
 /parcourstats/static/front/
 /chromedriverprofile/
+/exception.png
+/parcourstats_dev.sqlite
