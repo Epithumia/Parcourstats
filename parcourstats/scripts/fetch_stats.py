@@ -42,10 +42,10 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
     nb_voeux_confirmes = 0
     liste = {}
     for i in range(1, nb + 1):
-        element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+        element = WebDriverWait(browser, 300).until(lambda x, i=i: x.find_element_by_xpath(
             '/html/body/div[2]/div[4]/div[2]/form[2]/div/div[3]/div/table/tbody/tr[' + str(i) + ']/td[1]'))
         id_cand = int(element.text)
-        element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+        element = WebDriverWait(browser, 300).until(lambda x, i=i: x.find_element_by_xpath(
             '/html/body/div[2]/div[4]/div[2]/form[2]/div/div[3]/div/table/tbody/tr[' + str(i) + ']/td[7]'))
         liste[id_cand] = element.text
         if element.text == 'Validée':
@@ -132,7 +132,8 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
 
             stats_gr = {}
             WebDriverWait(browser, 300).until(
-                lambda x: x.find_element_by_xpath('//*[@id="dossier_GROUPE_' + str(code_groupe) + '_btn_reinitialiser"]'))
+                lambda x, code_groupe=code_groupe: x.find_element_by_xpath(
+                    '//*[@id="dossier_GROUPE_' + str(code_groupe) + '_btn_reinitialiser"]'))
             for i in range(1, nb_voeux_gr + 1):
                 rpath = '/html/body/div[2]/div[5]/div/div[3]/div/div[3]/div/table/tbody/tr[' + str(i) + ']/td['
                 id_cand = int(browser.find_element_by_xpath(rpath + '1]').text)
@@ -150,7 +151,8 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
 
                 voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
                 if voeu is None:
-                    voeu = Voeu(id=id_cand, nom=nom_cand, prenom=prenom_cand, seriebac=seriebac_q, id_groupe=code_groupe)
+                    voeu = Voeu(id=id_cand, nom=nom_cand, prenom=prenom_cand, seriebac=seriebac_q,
+                                id_groupe=code_groupe)
                     dbsession.add(voeu)
                     transaction.manager.commit()
                 voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
@@ -245,7 +247,6 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
                         stats_spe[spe.id] = 0
                     stats_spe[spe.id] += 1
 
-
             for serie_bac in stats_gr.keys():
                 typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == libelle).first()
                 if typebac_q is None:
@@ -284,10 +285,10 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
 
     for spe in stats_spe.keys():
         stat = dbsession.query(StatSpecialites).filter(StatSpecialites.id_specialite == spe,
-                                                  StatSpecialites.timestamp == prev).first()
+                                                       StatSpecialites.timestamp == prev).first()
         if stat is None:
             stat = StatSpecialites(id_specialite=spe, timestamp=prev)
-        stat.nb_voeux=stats_spe[spe]
+        stat.nb_voeux = stats_spe[spe]
         dbsession.add(stat)
         transaction.manager.commit()
 
@@ -307,17 +308,18 @@ def run(args, opt):
         code = settings.get('parcoursup.code_formation', None)
         sf = get_session_factory(engine)
         dbsession = get_tm_session(sf, transaction.manager)
+        # Ajouter un sélecteur pour le driver ?
         options = webdriver.FirefoxOptions()
-        # chrome_options.add_argument("--window-size=1920,1080")
         options.add_argument("--disable-infobars")
         options.add_argument("--disable-extensions")
-        # options.add_argument("--headless")
+        options.add_argument("--headless")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--no-sandbox")
         options.add_argument("--width=1920")
         options.add_argument("--height=1200")
-        # chrome_options.add_argument("--user-data-dir=./chromedriverprofile")
-        # browser = webdriver.Chrome(chrome_options=chrome_options)
+
+        # Chrome : chrome_options.add_argument("--window-size=1920,1080")
+        # Chrome : browser = webdriver.Chrome(chrome_options=chrome_options)
         browser = webdriver.Firefox(firefox_options=options)
         try:
             browser.get('https://gestion.parcoursup.fr/Gestion')
