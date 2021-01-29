@@ -49,7 +49,7 @@ class TypeBac(Base):
     """
     __tablename__ = 'typebac'
     id = Column(Integer, primary_key=True, autoincrement=True, doc="Identifiant interne du TypeBac.")
-    nom = Column(String, nullable=False, doc="Nom du semestre, *obligatoire*.")
+    nom = Column(String, nullable=False, doc="Nom du TypeBac, *obligatoire*.")
 
 
 class StatDetail(Base):
@@ -116,7 +116,7 @@ class Groupe(Base):
     nbAppel = Column(Integer, doc="Nombre de candidats à appeler")
 
     id_formation = Column(Integer, ForeignKey('formation.code'),
-                          doc="Identifiant de la formation. Fait partie de la clef primaire.")
+                          doc="Identifiant de la formation.")
     formation = relationship("Formation", backref=backref("groupes", cascade='all'), foreign_keys=[id_formation],
                              doc="Relation vers :class:`.Formation`")
 
@@ -137,7 +137,7 @@ class Candidat(Base):
     classement = Column(Integer, doc="Classement")
 
     id_groupe = Column(Integer, ForeignKey('groupe.code'),
-                       doc="Identifiant de la formation. Fait partie de la clef primaire.")
+                       doc="Identifiant du groupe.")
     groupe = relationship("Groupe", backref=backref("candidats", cascade='all'), foreign_keys=[id_groupe],
                           doc="Relation vers :class:`.Groupe`")
 
@@ -165,6 +165,18 @@ class Voeu(Base):
     nom = Column(String, doc="Nom du candidat")
     prenom = Column(String, doc="Nom du candidat")
     etablissement = Column(String, doc="Etablissement d'origine du candidat")
+
+    id_groupe = Column(Integer, ForeignKey('groupe.code'),
+                       doc="Identifiant du groupe.")
+
+    id_serie = Column(Integer, ForeignKey('seriebac.id'),
+                      doc="Identifiant de la série de bac.")
+
+    groupe = relationship("Groupe", backref=backref("voeux", cascade='all'), foreign_keys=[id_groupe],
+                          doc="Relation vers :class:`.Groupe`")
+
+    seriebac = relationship("SerieBac", backref=backref("voeux", cascade='all'), foreign_keys=[id_serie],
+                            doc="Relation vers :class:`.SerieBac`")
 
     options = relationship(
         "Option",

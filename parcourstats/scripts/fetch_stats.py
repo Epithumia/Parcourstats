@@ -140,9 +140,17 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
                 prenom_cand = browser.find_element_by_xpath(rpath + '3]').text
                 serie_bac = browser.find_element_by_xpath(rpath + '4]').text
 
+                seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+                if seriebac_q is None:
+                    seriebac_q = SerieBac()
+                    seriebac_q.nom = serie_bac
+                    dbsession.add(seriebac_q)
+                    transaction.manager.commit()
+                seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+
                 voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
                 if voeu is None:
-                    voeu = Voeu(id=id_cand, nom=nom_cand, prenom=prenom_cand)
+                    voeu = Voeu(id=id_cand, nom=nom_cand, prenom=prenom_cand, seriebac=seriebac_q, id_groupe=code_groupe)
                     dbsession.add(voeu)
                     transaction.manager.commit()
                 voeu = dbsession.query(Voeu).filter(Voeu.id == id_cand).first()
@@ -152,7 +160,7 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
                 stats_gr[serie_bac]['nb_voeux'] += 1
                 if liste[id_cand] == 'Validée':
                     stats_gr[serie_bac]['nb_voeux_confirmes'] += 1
-                if voeu.etablissement is not None and len(voeu.options) == 0 and len(voeu.specialites) == 0:
+                if voeu.etablissement is None and len(voeu.options) == 0 and len(voeu.specialites) == 0:
                     main_window = browser.current_window_handle
                     el = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
                         '//*[@id="dossier_GROUPE_' + str(code_groupe) + '_filtre_0"]'))
