@@ -166,6 +166,9 @@ class Voeu(Base):
     prenom = Column(String, doc="Nom du candidat")
     etablissement = Column(String, doc="Etablissement d'origine du candidat")
 
+    statut = Column(String, doc="Statut : Néo-bachelier, Réorientation")
+    origine = Column(String, doc="Origine : Bac FR ou équivalent")
+
     id_groupe = Column(Integer, ForeignKey('groupe.code'),
                        doc="Identifiant du groupe.")
 
