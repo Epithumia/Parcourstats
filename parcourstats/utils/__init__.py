@@ -1,8 +1,11 @@
 import json
 
-from pandas import read_sql, merge
+from pandas import read_sql, merge, concat
+from sqlalchemy import not_, func
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql.expression import literal_column
 
-from parcourstats.models import SerieBac, TypeBac, StatDetail, StatGenerale, StatAdmission, Candidat
+from parcourstats.models import SerieBac, TypeBac, StatDetail, StatGenerale, StatAdmission, Candidat, Voeu, Specialite
 
 
 def get_data(code, dbsession):
@@ -69,3 +72,74 @@ def get_admissions(code, dbsession):
                                                                                 values='id_candidat')
     data_etat = json.loads(data_etat.to_json())
     return {'decisions': data_decision, 'etats': data_etat}
+
+
+def get_repartition(code, dbsession):
+    Specialite2 = aliased(Specialite)
+
+    deux_spe_subq = dbsession.query(Voeu.id) \
+        .join(Voeu.specialites) \
+        .filter(Specialite.nom.like('%(T)%')) \
+        .group_by(Voeu.id) \
+        .having(func.count() >= 2) \
+        .subquery()
+    une_spe_subq = dbsession.query(Voeu.id) \
+        .join(Voeu.specialites) \
+        .filter(Specialite.nom.like('%(T)%')) \
+        .group_by(Voeu.id) \
+        .having(func.count() == 1) \
+        .subquery()
+    zero_spe_subq = dbsession.query(Voeu.id) \
+        .filter(not_(Voeu.id.in_(deux_spe_subq))) \
+        .filter(not_(Voeu.id.in_(une_spe_subq))) \
+        .subquery()
+
+    data_query_zero = dbsession.query(Voeu, literal_column("'NA'").label('nom_spe'),
+                                      literal_column("'NA'").label('nom_spe2'),
+                                      SerieBac.nom.label('serie_bac')) \
+        .join(Voeu.seriebac) \
+        .filter(Voeu.actif == 1) \
+        .filter(Voeu.id.in_(zero_spe_subq))
+
+    data_query_un = dbsession.query(Voeu, Specialite.nom.label('nom_spe'),
+                                    literal_column("'NA'").label('nom_spe2'),
+                                    SerieBac.nom.label('serie_bac')) \
+        .join(Specialite, Voeu.specialites) \
+        .join(Voeu.seriebac) \
+        .filter(Voeu.actif == 1) \
+        .filter(Specialite.nom.like('%(T)%')) \
+        .filter(Voeu.id.in_(une_spe_subq))
+
+    data_query_deux = dbsession.query(Voeu, Specialite.nom.label('nom_spe'),
+                                      Specialite2.nom.label('nom_spe2'),
+                                      SerieBac.nom.label('serie_bac')) \
+        .join(Specialite, Voeu.specialites) \
+        .join(Specialite2, Voeu.specialites) \
+        .join(Voeu.seriebac) \
+        .filter(Voeu.actif == 1) \
+        .filter(Specialite.nom.like('%(T)%')) \
+        .filter(Specialite2.nom.like('%(T)%')) \
+        .filter(Specialite.nom < Specialite2.nom) \
+        .filter(Voeu.id.in_(deux_spe_subq))
+
+    data_query = data_query_deux.union(data_query_zero, data_query_un) \
+        .order_by(Specialite.nom, Voeu.id)
+    if code != '*':
+        data_query = data_query.filter(Voeu.id_groupe == code)
+
+    data = read_sql(data_query.statement, data_query.session.bind)
+
+    data_ant_neo = data[['voeu_statut', 'voeu_id']].drop_duplicates().groupby(
+        ['voeu_statut']).count().reset_index().set_index('voeu_statut').rename(
+        columns={'voeu_id': 'Répartition Néo/Anté'})
+    data_filiere = data[['serie_bac', 'voeu_id']].drop_duplicates().groupby(
+        ['serie_bac']).count().reset_index().set_index('serie_bac').rename(columns={'voeu_id': 'Série du bac'})
+    data_spes = data[['nom_spe', 'nom_spe2', 'voeu_id']].drop_duplicates().groupby(['nom_spe', 'nom_spe2']).count().reset_index()
+    data_spes['noms_spes'] = data_spes['nom_spe'] + ' & ' + data_spes['nom_spe2']
+    data_spes = data_spes[['noms_spes', 'voeu_id']].set_index('noms_spes').rename(columns={'voeu_id': 'Spécialités'})
+
+    stats_repartition = concat([data_ant_neo, data_filiere, data_spes]).fillna(0).transpose()
+    labels = stats_repartition.columns.tolist()
+    stats_repartition = json.loads(stats_repartition.to_json(force_ascii=False))
+
+    return {'stats': stats_repartition, 'labels': labels}

@@ -143,13 +143,13 @@ class Candidat(Base):
 
 
 options_voeux = Table('options_voeux', Base.metadata,
-                      Column('id_voeu', Integer, ForeignKey('voeu.id')),
-                      Column('id_optionbac', Integer, ForeignKey('optionbac.id'))
+                      Column('id_voeu', Integer, ForeignKey('voeu.id', ondelete="cascade")),
+                      Column('id_optionbac', Integer, ForeignKey('optionbac.id', ondelete="cascade"))
                       )
 
 specialites_voeux = Table('specialites_voeux', Base.metadata,
-                          Column('id_voeu', Integer, ForeignKey('voeu.id')),
-                          Column('id_specialitebac', Integer, ForeignKey('specialitebac.id'))
+                          Column('id_voeu', Integer, ForeignKey('voeu.id', ondelete="cascade")),
+                          Column('id_specialitebac', Integer, ForeignKey('specialitebac.id', ondelete="cascade"))
                           )
 
 
@@ -168,6 +168,8 @@ class Voeu(Base):
 
     statut = Column(String, doc="Statut : Néo-bachelier, Réorientation")
     origine = Column(String, doc="Origine : Bac FR ou équivalent")
+
+    actif = Column(Integer, doc="Indique si le voeu a été vu lors de la dernière mise à jour", default=0)
 
     id_groupe = Column(Integer, ForeignKey('groupe.code'),
                        doc="Identifiant du groupe.")
