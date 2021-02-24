@@ -321,107 +321,110 @@ def run(args, opt):
                         lambda x: x.find_element_by_id('choix_details_stats'))
                     sel = Select(element)
 
-                    path = '/html/body/div[2]/div[4]/div/div[2]/div[3]/div/table/tbody/tr['
-                    try:
-                        details_total = {}
-                        for i in range(1, 30):
-                            j = 1
-                            xpath = path + str(i) + ']/td[' + str(j) + ']'
-                            cell = browser.find_element_by_xpath(xpath)
-                            serie_bac = cell.text
-                            if serie_bac not in details_total.keys():
-                                details_total[serie_bac] = {}
-                            seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+                    path1 = '/html/body/div[2]/div[4]/div/div[2]/div[3]/div/table/tbody/tr['
+                    path2 = '/html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/tbody/tr['
+                    for path in [path1, path2]:
+                        try:
+                            details_total = {}
+                            for i in range(1, 100):
+                                j = 1
+                                xpath = path + str(i) + ']/td[' + str(j) + ']'
+                                cell = browser.find_element_by_xpath(xpath)
+                                serie_bac = cell.text
+                                if serie_bac not in details_total.keys():
+                                    details_total[serie_bac] = {}
+                                seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
 
-                            if seriebac_q is None:
-                                seriebac_q = SerieBac()
-                                seriebac_q.nom = serie_bac
-                                dbsession.add(seriebac_q)
+                                if seriebac_q is None:
+                                    seriebac_q = SerieBac()
+                                    seriebac_q.nom = serie_bac
+                                    dbsession.add(seriebac_q)
+                                    transaction.manager.commit()
+
+                                j = 2
+                                xpath = path + str(i) + ']/td[' + str(j) + ']'
+                                cell = browser.find_element_by_xpath(xpath)
+                                type_bac = cell.text
+                                typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
+
+                                if typebac_q is None:
+                                    typebac_q = TypeBac()
+                                    typebac_q.nom = type_bac
+                                    dbsession.add(typebac_q)
+                                    transaction.manager.commit()
+                                j = 3
+                                xpath = path + str(i) + ']/td[' + str(j) + ']'
+                                cell = browser.find_element_by_xpath(xpath)
+                                nb_voeux_serie_type = cell.text
+                                details_total[serie_bac][type_bac] = nb_voeux_serie_type
+                                typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
+                                seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+                                stat = dbsession.query(StatDetail).filter(StatDetail.id_typebac == typebac_q.id,
+                                                                          StatDetail.id_serie == seriebac_q.id,
+                                                                          StatDetail.timestamp == prev,
+                                                                          StatDetail.id_formation == code).first()
+                                if stat is None:
+                                    stat = StatDetail(id_typebac=typebac_q.id, id_serie=seriebac_q.id, timestamp=prev,
+                                                      total=0,
+                                                      confirmes=0, id_formation=code)
+                                stat.total = nb_voeux_serie_type
+                                dbsession.add(stat)
                                 transaction.manager.commit()
 
-                            j = 2
-                            xpath = path + str(i) + ']/td[' + str(j) + ']'
-                            cell = browser.find_element_by_xpath(xpath)
-                            type_bac = cell.text
-                            typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
-
-                            if typebac_q is None:
-                                typebac_q = TypeBac()
-                                typebac_q.nom = type_bac
-                                dbsession.add(typebac_q)
-                                transaction.manager.commit()
-                            j = 3
-                            xpath = path + str(i) + ']/td[' + str(j) + ']'
-                            cell = browser.find_element_by_xpath(xpath)
-                            nb_voeux_serie_type = cell.text
-                            details_total[serie_bac][type_bac] = nb_voeux_serie_type
-                            typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
-                            seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
-                            stat = dbsession.query(StatDetail).filter(StatDetail.id_typebac == typebac_q.id,
-                                                                      StatDetail.id_serie == seriebac_q.id,
-                                                                      StatDetail.timestamp == prev,
-                                                                      StatDetail.id_formation == code).first()
-                            if stat is None:
-                                stat = StatDetail(id_typebac=typebac_q.id, id_serie=seriebac_q.id, timestamp=prev,
-                                                  total=0,
-                                                  confirmes=0, id_formation=code)
-                            stat.total = nb_voeux_serie_type
-                            dbsession.add(stat)
-                            transaction.manager.commit()
-
-                    except NoSuchElementException:
-                        pass
+                        except NoSuchElementException:
+                            pass
                     transaction.manager.commit()
                     sel.select_by_visible_text('Total des voeux confirmés')
                     WebDriverWait(browser, 300).until(
                         lambda x: x.find_element_by_id('choix_details_stats'))
-                    try:
-                        details_confirmes = {}
-                        for i in range(1, 30):
-                            j = 1
-                            xpath = path + str(i) + ']/td[' + str(j) + ']'
-                            cell = browser.find_element_by_xpath(xpath)
-                            serie_bac = cell.text
-                            if serie_bac not in details_confirmes.keys():
-                                details_confirmes[serie_bac] = {}
-                            seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+                    for path in [path1, path2]:
+                        try:
+                            details_confirmes = {}
+                            for i in range(1, 30):
+                                j = 1
+                                xpath = path + str(i) + ']/td[' + str(j) + ']'
+                                cell = browser.find_element_by_xpath(xpath)
+                                serie_bac = cell.text
+                                if serie_bac not in details_confirmes.keys():
+                                    details_confirmes[serie_bac] = {}
+                                seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
 
-                            if seriebac_q is None:
-                                seriebac_q = SerieBac()
-                                seriebac_q.nom = serie_bac
-                                dbsession.add(seriebac_q)
-                                transaction.manager.commit()
-                            j = 2
-                            xpath = path + str(i) + ']/td[' + str(j) + ']'
-                            cell = browser.find_element_by_xpath(xpath)
-                            type_bac = cell.text
-                            typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
+                                if seriebac_q is None:
+                                    seriebac_q = SerieBac()
+                                    seriebac_q.nom = serie_bac
+                                    dbsession.add(seriebac_q)
+                                    transaction.manager.commit()
+                                j = 2
+                                xpath = path + str(i) + ']/td[' + str(j) + ']'
+                                cell = browser.find_element_by_xpath(xpath)
+                                type_bac = cell.text
+                                typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
 
-                            if typebac_q is None:
-                                typebac_q = SerieBac()
-                                typebac_q.nom = type_bac
-                                dbsession.add(typebac_q)
+                                if typebac_q is None:
+                                    typebac_q = SerieBac()
+                                    typebac_q.nom = type_bac
+                                    dbsession.add(typebac_q)
+                                    transaction.manager.commit()
+                                j = 3
+                                xpath = path + str(i) + ']/td[' + str(j) + ']'
+                                cell = browser.find_element_by_xpath(xpath)
+                                nb_voeux_serie_type = cell.text
+                                details_confirmes[serie_bac][type_bac] = nb_voeux_serie_type
+                                typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
+                                seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+                                stat = dbsession.query(StatDetail).filter(StatDetail.id_typebac == typebac_q.id,
+                                                                          StatDetail.id_serie == seriebac_q.id,
+                                                                          StatDetail.timestamp == prev,
+                                                                          StatGenerale.id_formation == code).first()
+                                if stat is None:
+                                    stat = StatDetail(id_typebac=typebac_q.id, id_serie=seriebac_q.id, timestamp=prev,
+                                                      total=0,
+                                                      confirmes=0, id_formation=code)
+                                stat.confirmes = nb_voeux_serie_type
+                                dbsession.add(stat)
                                 transaction.manager.commit()
-                            j = 3
-                            xpath = path + str(i) + ']/td[' + str(j) + ']'
-                            cell = browser.find_element_by_xpath(xpath)
-                            nb_voeux_serie_type = cell.text
-                            details_confirmes[serie_bac][type_bac] = nb_voeux_serie_type
-                            typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
-                            seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
-                            stat = dbsession.query(StatDetail).filter(StatDetail.id_typebac == typebac_q.id,
-                                                                      StatDetail.id_serie == seriebac_q.id,
-                                                                      StatDetail.timestamp == prev,
-                                                                      StatGenerale.id_formation == code).first()
-                            if stat is None:
-                                stat = StatDetail(id_typebac=typebac_q.id, id_serie=seriebac_q.id, timestamp=prev,
-                                                  total=0,
-                                                  confirmes=0, id_formation=code)
-                            stat.confirmes = nb_voeux_serie_type
-                            dbsession.add(stat)
-                            transaction.manager.commit()
-                    except NoSuchElementException:
-                        pass
+                        except NoSuchElementException:
+                            pass
 
             if opt.stats_adm:
                 element = WebDriverWait(browser, 300).until(
