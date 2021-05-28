@@ -518,6 +518,58 @@ def run(args, opt):
                                 lambda x: x.find_element_by_link_text('Suivi des admissions'))
                             element.click()
 
+                            details = browser.find_element_by_xpath(fpath + str(n) + ']/td[11]')
+                            browser.execute_script('arguments[0].scrollIntoView(true);', details)
+                            details.click()
+
+                            # /html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select/
+                            element = WebDriverWait(browser, 300).until(
+                                lambda x: x.find_element_by_xpath(
+                                    '/html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select'))
+                            sel = Select(element)
+                            sel.select_by_visible_text('Tout')
+                            # Get tous les candidats du groupe
+                            tpath = '/html/body/div[2]/div[5]/div/div[2]/div[3]/div/table'
+                            table = browser.find_element_by_xpath(tpath)
+                            df = read_html(table.get_attribute('outerHTML'))
+                            d = df[0000]
+                            d.columns = ['ordre', 'classement', 'date', 'id_candidat', 'nom', 'profil', 'etabl', 'etat',
+                                         'decision', 'dossier']
+                            list_cand = dbsession.query(Candidat.id).filter(Candidat.id_groupe == code_groupe).all()
+                            list_cand = [x[0] for x in list_cand]
+                            for row in d[
+                                ['ordre', 'classement', 'id_candidat', 'nom', 'profil', 'etabl', 'etat',
+                                 'decision']].values:
+                                try:
+                                    if int(row[2]) not in list_cand:
+                                        candidat = Candidat(id=int(row[2]), nom=row[3], profil=row[4],
+                                                            etablissement=row[5],
+                                                            ordreAppel=int(row[0]), classement=int(row[1]),
+                                                            id_groupe=code_groupe)
+                                        dbsession.add(candidat)
+                                        transaction.manager.commit()
+                                    stat_adm = dbsession.query(StatAdmission).filter(
+                                        StatAdmission.id_candidat == int(row[2]),
+                                        StatAdmission.timestamp == prev).first()
+                                    if stat_adm is None:
+                                        stat_adm = StatAdmission(id_candidat=int(row[2]), timestamp=prev,
+                                                                 etat=row[6] + ' (définitif)',
+                                                                 decision=row[7])
+                                    else:
+                                        stat_adm.etat = row[6] + ' (définitif)'
+                                        stat_adm.decision = row[7]
+                                    dbsession.add(stat_adm)
+                                    transaction.manager.commit()
+                                except ValueError:
+                                    pass
+                            element = WebDriverWait(browser, 300).until(
+                                lambda x: x.find_element_by_link_text('Admissions'))
+                            element.click()
+                            # TODO : lien ci-dessous
+                            element = WebDriverWait(browser, 300).until(
+                                lambda x: x.find_element_by_link_text('Suivi des admissions'))
+                            element.click()
+
                 except NoSuchElementException:
                     pass
             browser.close()
