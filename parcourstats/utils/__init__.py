@@ -67,5 +67,12 @@ def get_admissions(code, dbsession):
     data_decision = json.loads(data_decision.to_json())
     data_etat = data.groupby(['etat', 'timestamp']).count().reset_index().pivot(index='timestamp', columns='etat',
                                                                                 values='id_candidat')
+    data_accept = data_etat.filter(regex="Formation acceptée \(.*")
+    data_refus = data_etat.filter(regex = 'Proposition refusée.*')
+    data_renonce = data_etat.filter(regex = 'Renonce.*')
+    data_etat['Formation acceptée (total)'] = data_accept.sum(axis=1)
+    data_etat['Refus (total)'] = data_refus.sum(axis=1)
+    data_etat['Renonce (total)'] = data_renonce.sum(axis=1)
+
     data_etat = json.loads(data_etat.to_json())
     return {'decisions': data_decision, 'etats': data_etat}
