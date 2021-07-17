@@ -4,15 +4,14 @@ import optparse
 
 import transaction
 from pandas import read_html
+from parcourstats.models import get_session_factory, get_tm_session, StatGenerale, SerieBac, TypeBac, StatDetail, \
+    Formation, Groupe, Candidat, StatAdmission
 from pyramid.paster import bootstrap, setup_logging, get_appsettings
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.wait import WebDriverWait
 from sqlalchemy import engine_from_config
-
-from parcourstats.models import get_session_factory, get_tm_session, StatGenerale, SerieBac, TypeBac, StatDetail, \
-    Formation, Groupe, Candidat, StatAdmission
 
 
 def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, prev, dbsession):
@@ -533,8 +532,13 @@ def run(args, opt):
                             table = browser.find_element_by_xpath(tpath)
                             df = read_html(table.get_attribute('outerHTML'))
                             d = df[0000]
-                            d.columns = ['ordre', 'classement', 'date', 'id_candidat', 'nom', 'profil', 'etabl', 'etat',
-                                         'decision', 'dossier']
+                            if len(d.columns) == 11:
+                                d.columns = ['type', 'ordre', 'date', 'date_oui_def', 'id_candidat', 'nom', 'profil',
+                                             'etabl', 'etat', 'decision', 'dossier']
+                            else:
+                                d.columns = ['ordre', 'date', 'date_oui_def', 'id_candidat', 'nom', 'profil',
+                                             'etabl', 'etat', 'decision', 'dossier']
+                            d['classement'] = None
                             list_cand = dbsession.query(Candidat.id).filter(Candidat.id_groupe == code_groupe).all()
                             list_cand = [x[0] for x in list_cand]
                             for row in d[
