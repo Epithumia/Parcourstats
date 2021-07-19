@@ -589,8 +589,13 @@ def run(args, opt):
                             table = browser.find_element_by_xpath(tpath)
                             df = read_html(table.get_attribute('outerHTML'))
                             d = df[0000]
-                            d.columns = ['ordre', 'classement', 'date', 'id_candidat', 'nom', 'profil', 'etabl', 'etat',
-                                         'decision', 'dossier']
+                            if len(d.columns) == 11:
+                                d.columns = ['type', 'ordre', 'date', 'date_oui_def', 'id_candidat', 'nom', 'profil',
+                                             'etabl', 'etat', 'decision', 'dossier']
+                            else:
+                                d.columns = ['ordre', 'date', 'date_oui_def', 'id_candidat', 'nom', 'profil',
+                                             'etabl', 'etat', 'decision', 'dossier']
+                            d['classement'] = None
                             list_cand = dbsession.query(Candidat.id).filter(Candidat.id_groupe == code_groupe).all()
                             list_cand = [x[0] for x in list_cand]
                             for row in d[
