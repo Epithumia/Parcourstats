@@ -374,6 +374,9 @@ def run(args, opt):
                         except NoSuchElementException:
                             pass
                     transaction.manager.commit()
+                    element = WebDriverWait(browser, 300).until(
+                        lambda x: x.find_element_by_id('choix_details_stats'))
+                    sel = Select(element)
                     sel.select_by_visible_text('Total des voeux confirmés')
                     WebDriverWait(browser, 300).until(lambda x: x.find_element_by_id('statistiques_10902_filtre_0'))
                     WebDriverWait(browser, 300).until(
