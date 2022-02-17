@@ -316,6 +316,7 @@ def run(args, opt):
                         lambda x: x.find_element_by_id('choix_details_stats'))
                     sel = Select(element)
                     sel.select_by_visible_text('Total des voeux')
+                    WebDriverWait(browser, 300).until(lambda x: x.find_element_by_id('statistiques_10902_filtre_0'))
                     element = WebDriverWait(browser, 300).until(
                         lambda x: x.find_element_by_id('choix_details_stats'))
                     sel = Select(element)
@@ -374,6 +375,7 @@ def run(args, opt):
                             pass
                     transaction.manager.commit()
                     sel.select_by_visible_text('Total des voeux confirmés')
+                    WebDriverWait(browser, 300).until(lambda x: x.find_element_by_id('statistiques_10902_filtre_0'))
                     WebDriverWait(browser, 300).until(
                         lambda x: x.find_element_by_id('choix_details_stats'))
                     for path in [path1, path2]:
@@ -410,6 +412,11 @@ def run(args, opt):
                                 nb_voeux_serie_type = cell.text
                                 details_confirmes[serie_bac][type_bac] = nb_voeux_serie_type
                                 typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
+                                if typebac_q is None:
+                                    typebac_q = SerieBac()
+                                    typebac_q.nom = type_bac
+                                    dbsession.add(typebac_q)
+                                    transaction.manager.commit()
                                 seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
                                 stat = dbsession.query(StatDetail).filter(StatDetail.id_typebac == typebac_q.id,
                                                                           StatDetail.id_serie == seriebac_q.id,
