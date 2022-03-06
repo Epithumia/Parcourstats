@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import optparse
+from time import sleep
 
 import transaction
 from pandas import read_html
@@ -316,6 +317,7 @@ def run(args, opt):
                         lambda x: x.find_element_by_id('choix_details_stats'))
                     sel = Select(element)
                     sel.select_by_visible_text('Total des voeux')
+                    sleep(30)
                     WebDriverWait(browser, 300).until(lambda x: x.find_element_by_id('statistiques_10902_filtre_0'))
                     element = WebDriverWait(browser, 300).until(
                         lambda x: x.find_element_by_id('choix_details_stats'))
@@ -378,6 +380,7 @@ def run(args, opt):
                         lambda x: x.find_element_by_id('choix_details_stats'))
                     sel = Select(element)
                     sel.select_by_visible_text('Total des voeux confirmés')
+                    sleep(30)
                     WebDriverWait(browser, 300).until(lambda x: x.find_element_by_id('statistiques_10902_filtre_0'))
                     WebDriverWait(browser, 300).until(
                         lambda x: x.find_element_by_id('choix_details_stats'))
