@@ -424,6 +424,7 @@ def run(args, opt):
                                     dbsession.add(typebac_q)
                                     transaction.manager.commit()
                                 seriebac_q = dbsession.query(SerieBac).filter(SerieBac.nom == serie_bac).first()
+                                typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
                                 stat = dbsession.query(StatDetail).filter(StatDetail.id_typebac == typebac_q.id,
                                                                           StatDetail.id_serie == seriebac_q.id,
                                                                           StatDetail.timestamp == prev,
