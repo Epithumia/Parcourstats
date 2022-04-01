@@ -64,7 +64,6 @@ setup(name='parcourstats',
       [paste.app_factory]
       main = parcourstats:main
       [console_scripts]
-      initialisation_parcourstats_db = parcourstats.scripts.initializedb:main
       fetch_parcourstats_db = parcourstats.scripts.fetch_stats:main
       """,
       )

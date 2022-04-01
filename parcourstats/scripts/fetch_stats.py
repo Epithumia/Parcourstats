@@ -419,7 +419,7 @@ def run(args, opt):
                                 details_confirmes[serie_bac][type_bac] = nb_voeux_serie_type
                                 typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
                                 if typebac_q is None:
-                                    typebac_q = SerieBac()
+                                    typebac_q = TypeBac()
                                     typebac_q.nom = type_bac
                                     dbsession.add(typebac_q)
                                     transaction.manager.commit()
