@@ -561,7 +561,7 @@ def run(args, opt):
                                  'decision']].values:
                                 try:
                                     if int(row[2]) not in list_cand:
-                                        if row[0] is None:
+                                        if row[1] is None:
                                             row[0] = -1
                                             row[1] = -1
                                         candidat = Candidat(id=int(row[2]), nom=row[3], profil=row[4],
@@ -621,7 +621,7 @@ def run(args, opt):
                                  'decision']].values:
                                 try:
                                     if int(row[2]) not in list_cand:
-                                        if row[0] is None:
+                                        if row[1] is None:
                                             row[0] = -1
                                             row[1] = -1
                                         candidat = Candidat(id=int(row[2]), nom=row[3], profil=row[4],
@@ -651,6 +651,7 @@ def run(args, opt):
                             element = WebDriverWait(browser, 300).until(
                                 lambda x: x.find_element_by_link_text('Suivi des admissions'))
                             element.click()
+                            sleep(10)
 
                 except NoSuchElementException:
                     pass
