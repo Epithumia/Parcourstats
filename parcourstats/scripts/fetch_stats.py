@@ -463,7 +463,7 @@ def run(args, opt):
                     print('Formation inconnue')
                     browser.close()
                     exit(1)
-
+                sleep(10)
                 try:
                     for n in range(ligne, 50):
                         #        /html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/tbody/tr[1]/td[18]/a
@@ -561,6 +561,9 @@ def run(args, opt):
                                  'decision']].values:
                                 try:
                                     if int(row[2]) not in list_cand:
+                                        if row[0] is None:
+                                            row[0] = -1
+                                            row[1] = -1
                                         candidat = Candidat(id=int(row[2]), nom=row[3], profil=row[4],
                                                             etablissement=row[5],
                                                             ordreAppel=int(row[0]), classement=int(row[1]),
@@ -618,6 +621,9 @@ def run(args, opt):
                                  'decision']].values:
                                 try:
                                     if int(row[2]) not in list_cand:
+                                        if row[0] is None:
+                                            row[0] = -1
+                                            row[1] = -1
                                         candidat = Candidat(id=int(row[2]), nom=row[3], profil=row[4],
                                                             etablissement=row[5],
                                                             ordreAppel=int(row[0]), classement=int(row[1]),
