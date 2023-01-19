@@ -39,7 +39,7 @@ docs_require = [
 ]
 
 setup(name='parcourstats',
-      version='2.0.0',
+      version='2.0.1',
       description='parcourstats',
       long_description='Utilistaire pour récupérer et afficher les statistiques Parcoursup',
       classifiers=[

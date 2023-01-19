@@ -12,46 +12,47 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.by import By
 from sqlalchemy import engine_from_config
 
 
 def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, prev, dbsession):
     now = datetime.datetime.now()
-    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Candidats'))
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.LINK_TEXT, 'Candidats'))
     element.click()
-    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.XPATH,
         '/html/body/div[2]/div[4]/div[2]/form[1]/table/tbody/tr[1]/td[2]/fieldset/legend/a[1]'))
     element.click()
-    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.XPATH,
         '//*[@id="form_' + str(code) + '"]'))
     element.click()
-    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.XPATH,
         '/html/body/div[2]/div[4]/div[2]/form[1]/table/tbody/tr[2]/td/table[2]/tbody/tr/td[2]/a'))
     element.click()
     element = WebDriverWait(browser, 300).until(
-        lambda x: x.find_element_by_xpath('/html/body/div[2]/div[4]/div[2]/form[2]/div/div[1]/div[2]/div/label/select'))
+        lambda x: x.find_element(By.XPATH, '/html/body/div[2]/div[4]/div[2]/form[2]/div/div[1]/div[2]/div/label/select'))
     sel = Select(element)
     sel.select_by_visible_text('Tout')
 
-    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.XPATH,
         '/html/body/div[2]/div[4]/div[2]/span'))
     nb = int(element.text)
     nb_voeux_confirmes = 0
     liste = {}
     for i in range(1, nb + 1):
-        element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+        element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.XPATH,
             '/html/body/div[2]/div[4]/div[2]/form[2]/div/div[3]/div/table/tbody/tr[' + str(i) + ']/td[1]'))
         id_cand = int(element.text)
-        element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+        element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.XPATH,
             '/html/body/div[2]/div[4]/div[2]/form[2]/div/div[3]/div/table/tbody/tr[' + str(i) + ']/td[7]'))
         liste[id_cand] = element.text
         if element.text == 'Validée':
             nb_voeux_confirmes += 1
 
-    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Groupes'))
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.LINK_TEXT, 'Groupes'))
     element.click()
     try:
-        element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath('//*[@id="retour"]'))
+        element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.XPATH, '//*[@id="retour"]'))
         element.click()
 
     except NoSuchElementException:
@@ -61,10 +62,10 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
     fpath = '/html/body/div[2]/div[4]/div/div[2]/div[3]/div/table/tbody/tr['
     try:
         for n in range(1, 50):
-            element1 = browser.find_element_by_xpath(fpath + str(n) + ']/td[1]')
-            element2 = browser.find_element_by_xpath(fpath + str(n) + ']/td[2]')
-            element3 = browser.find_element_by_xpath(fpath + str(n) + ']/td[3]')
-            element4 = browser.find_element_by_xpath(fpath + str(n) + ']/td[4]')
+            element1 = browser.find_element(By.XPATH, fpath + str(n) + ']/td[1]')
+            element2 = browser.find_element(By.XPATH, fpath + str(n) + ']/td[2]')
+            element3 = browser.find_element(By.XPATH, fpath + str(n) + ']/td[3]')
+            element4 = browser.find_element(By.XPATH, fpath + str(n) + ']/td[4]')
             if (code and element4.text == code) or (
                     element1.text == type_formation and
                     element2.text == domaine and
@@ -105,23 +106,23 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
 
     bpath = '/html/body/div[2]/div[4]/div/div[2]/div[3]/div/table/tbody/tr[' + str(
         ligne) + ']/td[6]/table/tbody/tr/td[2]/a'
-    element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath(
+    element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.XPATH,
         bpath))
     element.click()
 
-    WebDriverWait(browser, 300).until(lambda x: x.find_element_by_xpath('//*[@id="main"]'))
+    WebDriverWait(browser, 300).until(lambda x: x.find_element(By.XPATH, '//*[@id="main"]'))
     for i in range(2, 50):
         gpath = '/html/body/div[2]/div[5]/div[2]/table/tbody/tr[' + str(i) + ']/td['
         try:
-            libelle = browser.find_element_by_xpath(gpath + '1]').text
-            lien = browser.find_element_by_xpath(gpath + '3]/a')
+            libelle = browser.find_element(By.XPATH, gpath + '1]').text
+            lien = browser.find_element(By.XPATH, gpath + '3]/a')
             nb_voeux_gr = int(lien.text)
             url = lien.get_attribute('href')
             code_groupe = int(url.split("=")[-1])
 
             lien.click()
             element = WebDriverWait(browser, 300).until(
-                lambda x: x.find_element_by_xpath(
+                lambda x: x.find_element(By.XPATH,
                     '/html/body/div[2]/div[5]/div/div[3]/div/div[1]/div[2]/div/label/select'))
             sel = Select(element)
             sel.select_by_visible_text('Tout')
@@ -129,8 +130,8 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
             stats_gr = {}
             for i in range(1, nb_voeux_gr + 1):
                 rpath = '/html/body/div[2]/div[5]/div/div[3]/div/div[3]/div/table/tbody/tr[' + str(i) + ']/td['
-                id_cand = int(browser.find_element_by_xpath(rpath + '1]').text)
-                serie_bac = browser.find_element_by_xpath(rpath + '4]').text
+                id_cand = int(browser.find_element(By.XPATH, rpath + '1]').text)
+                serie_bac = browser.find_element(By.XPATH, rpath + '4]').text
                 if serie_bac not in stats_gr:
                     stats_gr[serie_bac] = {'nb_voeux': 0, 'nb_voeux_confirmes': 0}
                 stats_gr[serie_bac]['nb_voeux'] += 1
@@ -168,7 +169,7 @@ def do_alternate_stats(browser, code, etbt, type_formation, domaine, mention, pr
                 dbsession.add(stat)
                 transaction.manager.commit()
 
-            back = browser.find_element_by_xpath('/html/body/div[2]/div[5]/div/a')
+            back = browser.find_element(By.XPATH, '/html/body/div[2]/div[5]/div/a')
             back.click()
         except NoSuchElementException:
             pass
@@ -196,21 +197,21 @@ def run(args, opt):
         # chrome_options.add_argument("--window-size=1920,1080")
         options.add_argument("--disable-infobars")
         options.add_argument("--disable-extensions")
-        options.add_argument("--headless")
+        #options.add_argument("--headless")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--no-sandbox")
         options.add_argument("--width=1920")
         options.add_argument("--height=1200")
         # chrome_options.add_argument("--user-data-dir=./chromedriverprofile")
         # browser = webdriver.Chrome(chrome_options=chrome_options)
-        browser = webdriver.Firefox(firefox_options=options)
+        browser = webdriver.Firefox(options=options)
         try:
             browser.get('https://gestion.parcoursup.fr/Gestion')
-            element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_name('g_ea_cod'))
+            element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.NAME, 'g_ea_cod'))
             element.send_keys(login)
-            element = browser.find_element_by_name('g_ea_mot_pas')
+            element = browser.find_element(By.NAME, 'g_ea_mot_pas')
             element.send_keys(mdp)
-            element = browser.find_element_by_class_name('bouton')
+            element = browser.find_element(By.CLASS_NAME, 'bouton')
             element.click()
             now = datetime.datetime.now()
             if now.time().hour < 6:
@@ -222,19 +223,19 @@ def run(args, opt):
             else:
                 prev = datetime.datetime(now.year, now.month, now.day, 18, 0, 0)
             if opt.stats_gen:
-                element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Candidatures'))
+                element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.LINK_TEXT, 'Candidatures'))
                 element.click()
-                element = WebDriverWait(browser, 300).until(lambda x: x.find_element_by_link_text('Statistiques'))
+                element = WebDriverWait(browser, 300).until(lambda x: x.find_element(By.LINK_TEXT, 'Statistiques'))
                 element.click()
                 ligne = 0
-                fpath = '/html/body/div[2]/div[4]/div[2]/div[3]/div/table/tbody/tr['
+                fpath = '/html/body/div[2]/div[4]/div[3]/div[3]/div/table/tbody/tr['
                 try:
                     for n in range(1, 50):
-                        element1 = browser.find_element_by_xpath(fpath + str(n) + ']/td[1]')
-                        element2 = browser.find_element_by_xpath(fpath + str(n) + ']/td[2]')
-                        element3 = browser.find_element_by_xpath(fpath + str(n) + ']/td[3]')
-                        element4 = browser.find_element_by_xpath(fpath + str(n) + ']/td[4]')
-                        element5 = browser.find_element_by_xpath(fpath + str(n) + ']/td[5]')
+                        element1 = browser.find_element(By.XPATH, fpath + str(n) + ']/td[1]')
+                        element2 = browser.find_element(By.XPATH, fpath + str(n) + ']/td[2]')
+                        element3 = browser.find_element(By.XPATH, fpath + str(n) + ']/td[3]')
+                        element4 = browser.find_element(By.XPATH, fpath + str(n) + ']/td[4]')
+                        element5 = browser.find_element(By.XPATH, fpath + str(n) + ']/td[5]')
                         if (code and element5.text == code) or (
                                 element1.text == etbt and
                                 element2.text == type_formation and
@@ -263,31 +264,31 @@ def run(args, opt):
                     fo.mention = mention
                     dbsession.add(fo)
                     transaction.manager.commit()
-                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[7]')
+                    element = browser.find_element(By.XPATH, fpath + str(ligne) + ']/td[7]')
                     nb_voeux_total = element.text
-                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[9]')
+                    element = browser.find_element(By.XPATH, fpath + str(ligne) + ']/td[9]')
                     nb_filles_total = element.text
-                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[10]')
+                    element = browser.find_element(By.XPATH, fpath + str(ligne) + ']/td[10]')
                     nb_garcons_total = element.text
-                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[11]')
+                    element = browser.find_element(By.XPATH, fpath + str(ligne) + ']/td[11]')
                     nb_boursiers_total = element.text
-                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[12]')
+                    element = browser.find_element(By.XPATH, fpath + str(ligne) + ']/td[12]')
                     nb_non_boursiers_total = element.text
 
-                    element = browser.find_element_by_id('choix_stats')
+                    element = browser.find_element(By.ID, 'choix_stats')
                     sel = Select(element)
                     sel.select_by_visible_text('Total des voeux confirmés')
 
                     element = WebDriverWait(browser, 300).until(
-                        lambda x: x.find_element_by_xpath(fpath + str(ligne) + ']/td[7]'))
+                        lambda x: x.find_element(By.XPATH, fpath + str(ligne) + ']/td[7]'))
                     nb_voeux_confirmes = element.text
-                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[9]')
+                    element = browser.find_element(By.XPATH, fpath + str(ligne) + ']/td[9]')
                     nb_filles_confirmes = element.text
-                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[10]')
+                    element = browser.find_element(By.XPATH, fpath + str(ligne) + ']/td[10]')
                     nb_garcons_confirmes = element.text
-                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[11]')
+                    element = browser.find_element(By.XPATH, fpath + str(ligne) + ']/td[11]')
                     nb_boursiers_confirmes = element.text
-                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[12]')
+                    element = browser.find_element(By.XPATH, fpath + str(ligne) + ']/td[12]')
                     nb_non_boursiers_confirmes = element.text
 
                     stat_gen_q = dbsession.query(StatGenerale).filter(StatGenerale.id_formation == code,
@@ -310,17 +311,17 @@ def run(args, opt):
                     dbsession.add(stat_gen_q)
                     transaction.manager.commit()
 
-                    element = browser.find_element_by_xpath(fpath + str(ligne) + ']/td[13]/a')
+                    element = browser.find_element(By.XPATH, fpath + str(ligne) + ']/td[13]/a')
                     element.click()
 
                     element = WebDriverWait(browser, 300).until(
-                        lambda x: x.find_element_by_id('choix_details_stats'))
+                        lambda x: x.find_element(By.ID, 'choix_details_stats'))
                     sel = Select(element)
                     sel.select_by_visible_text('Total des voeux')
                     sleep(30)
-                    WebDriverWait(browser, 300).until(lambda x: x.find_element_by_id('statistiques_10902_filtre_0'))
+                    WebDriverWait(browser, 300).until(lambda x: x.find_element(By.ID, 'statistiques_10902_filtre_0'))
                     element = WebDriverWait(browser, 300).until(
-                        lambda x: x.find_element_by_id('choix_details_stats'))
+                        lambda x: x.find_element(By.ID, 'choix_details_stats'))
                     sel = Select(element)
 
                     path1 = '/html/body/div[2]/div[4]/div/div[2]/div[3]/div/table/tbody/tr['
@@ -331,7 +332,7 @@ def run(args, opt):
                             for i in range(1, 100):
                                 j = 1
                                 xpath = path + str(i) + ']/td[' + str(j) + ']'
-                                cell = browser.find_element_by_xpath(xpath)
+                                cell = browser.find_element(By.XPATH, xpath)
                                 serie_bac = cell.text
                                 if serie_bac not in details_total.keys():
                                     details_total[serie_bac] = {}
@@ -345,7 +346,7 @@ def run(args, opt):
 
                                 j = 2
                                 xpath = path + str(i) + ']/td[' + str(j) + ']'
-                                cell = browser.find_element_by_xpath(xpath)
+                                cell = browser.find_element(By.XPATH, xpath)
                                 type_bac = cell.text
                                 typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
 
@@ -356,7 +357,7 @@ def run(args, opt):
                                     transaction.manager.commit()
                                 j = 3
                                 xpath = path + str(i) + ']/td[' + str(j) + ']'
-                                cell = browser.find_element_by_xpath(xpath)
+                                cell = browser.find_element(By.XPATH, xpath)
                                 nb_voeux_serie_type = cell.text
                                 details_total[serie_bac][type_bac] = nb_voeux_serie_type
                                 typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
@@ -377,20 +378,20 @@ def run(args, opt):
                             pass
                     transaction.manager.commit()
                     element = WebDriverWait(browser, 300).until(
-                        lambda x: x.find_element_by_id('choix_details_stats'))
+                        lambda x: x.find_element(By.ID, 'choix_details_stats'))
                     sel = Select(element)
                     sel.select_by_visible_text('Total des voeux confirmés')
                     sleep(30)
-                    WebDriverWait(browser, 300).until(lambda x: x.find_element_by_id('statistiques_10902_filtre_0'))
+                    WebDriverWait(browser, 300).until(lambda x: x.find_element(By.ID, 'statistiques_10902_filtre_0'))
                     WebDriverWait(browser, 300).until(
-                        lambda x: x.find_element_by_id('choix_details_stats'))
+                        lambda x: x.find_element(By.ID, 'choix_details_stats'))
                     for path in [path1, path2]:
                         try:
                             details_confirmes = {}
                             for i in range(1, 30):
                                 j = 1
                                 xpath = path + str(i) + ']/td[' + str(j) + ']'
-                                cell = browser.find_element_by_xpath(xpath)
+                                cell = browser.find_element(By.XPATH, xpath)
                                 serie_bac = cell.text
                                 if serie_bac not in details_confirmes.keys():
                                     details_confirmes[serie_bac] = {}
@@ -403,7 +404,7 @@ def run(args, opt):
                                     transaction.manager.commit()
                                 j = 2
                                 xpath = path + str(i) + ']/td[' + str(j) + ']'
-                                cell = browser.find_element_by_xpath(xpath)
+                                cell = browser.find_element(By.XPATH, xpath)
                                 type_bac = cell.text
                                 typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
 
@@ -414,7 +415,7 @@ def run(args, opt):
                                     transaction.manager.commit()
                                 j = 3
                                 xpath = path + str(i) + ']/td[' + str(j) + ']'
-                                cell = browser.find_element_by_xpath(xpath)
+                                cell = browser.find_element(By.XPATH, xpath)
                                 nb_voeux_serie_type = cell.text
                                 details_confirmes[serie_bac][type_bac] = nb_voeux_serie_type
                                 typebac_q = dbsession.query(TypeBac).filter(TypeBac.nom == type_bac).first()
@@ -441,20 +442,20 @@ def run(args, opt):
 
             if opt.stats_adm:
                 element = WebDriverWait(browser, 300).until(
-                    lambda x: x.find_element_by_link_text('Admissions'))
+                    lambda x: x.find_element(By.LINK_TEXT, 'Admissions'))
                 element.click()
                 element = WebDriverWait(browser, 300).until(
-                    lambda x: x.find_element_by_link_text('Suivi des admissions'))
+                    lambda x: x.find_element(By.LINK_TEXT, 'Suivi des admissions'))
                 element.click()
                 WebDriverWait(browser, 300).until(
-                    lambda x: x.find_element_by_xpath(
+                    lambda x: x.find_element(By.XPATH,
                         '/html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/thead/tr/th[1]/select')
                 )
 
                 fpath = '/html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/tbody/tr['
                 try:
                     for n in range(1, 50):
-                        element2 = browser.find_element_by_xpath(fpath + str(n) + ']/td[2]')
+                        element2 = browser.find_element(By.XPATH, fpath + str(n) + ']/td[2]')
                         if (code and element2.text == code):
                             ligne = n
                 except NoSuchElementException:
@@ -468,10 +469,10 @@ def run(args, opt):
                     for n in range(ligne, 50):
                         #        /html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/tbody/tr[1]/td[18]/a
                         fpath = '/html/body/div[2]/div[4]/div/div/div[3]/div/table/tbody/tr['
-                        code_groupe = browser.find_element_by_xpath(fpath + str(n) + ']/td[4]').text
-                        libelle = browser.find_element_by_xpath(fpath + str(n) + ']/td[5]').text
-                        places = browser.find_element_by_xpath(fpath + str(n) + ']/td[6]').text
-                        nb_cand = browser.find_element_by_xpath(fpath + str(n) + ']/td[7]').text
+                        code_groupe = browser.find_element(By.XPATH, fpath + str(n) + ']/td[4]').text
+                        libelle = browser.find_element(By.XPATH, fpath + str(n) + ']/td[5]').text
+                        places = browser.find_element(By.XPATH, fpath + str(n) + ']/td[6]').text
+                        nb_cand = browser.find_element(By.XPATH, fpath + str(n) + ']/td[7]').text
                         groupe = dbsession.query(Groupe).filter(Groupe.code == code_groupe)
                         if groupe.count() == 0 and libelle != 'Total':
                             groupe = Groupe(code=code_groupe, libelle=libelle, places=places, nbAppel=nb_cand,
@@ -481,19 +482,19 @@ def run(args, opt):
                         # /html/body/div[2]/div[4]/div/div/div[3]/div/table/tbody/tr[1]/td[12]
                         # /html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/tbody/tr[1]/td[18]
                         if libelle != 'Total':
-                            details = browser.find_element_by_xpath(fpath + str(n) + ']/td[20]')
+                            details = browser.find_element(By.XPATH, fpath + str(n) + ']/td[20]')
                             browser.execute_script('arguments[0].scrollIntoView(true);', details)
                             details.click()
 
                             # /html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select/
                             element = WebDriverWait(browser, 300).until(
-                                lambda x: x.find_element_by_xpath(
+                                lambda x: x.find_element(By.XPATH,
                                     '/html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select'))
                             sel = Select(element)
                             sel.select_by_visible_text('Tout')
                             # Get tous les candidats du groupe
                             tpath = '/html/body/div[2]/div[5]/div/div[2]/div[3]/div/table'
-                            table = browser.find_element_by_xpath(tpath)
+                            table = browser.find_element(By.XPATH, tpath)
                             df = read_html(table.get_attribute('outerHTML'))
                             d = df[0000]
                             d.columns = ['ordre', 'classement', 'date', 'id_candidat', 'nom', 'profil', 'etabl', 'etat',
@@ -525,26 +526,26 @@ def run(args, opt):
                                 except ValueError:
                                     pass
                             element = WebDriverWait(browser, 300).until(
-                                lambda x: x.find_element_by_link_text('Admissions'))
+                                lambda x: x.find_element(By.LINK_TEXT, 'Admissions'))
                             element.click()
                             # TODO : lien ci-dessous
                             element = WebDriverWait(browser, 300).until(
-                                lambda x: x.find_element_by_link_text('Suivi des admissions'))
+                                lambda x: x.find_element(By.LINK_TEXT, 'Suivi des admissions'))
                             element.click()
 
-                            details = browser.find_element_by_xpath(fpath + str(n) + ']/td[13]')
+                            details = browser.find_element(By.XPATH, fpath + str(n) + ']/td[13]')
                             browser.execute_script('arguments[0].scrollIntoView(true);', details)
                             details.click()
 
                             # /html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select/
                             element = WebDriverWait(browser, 300).until(
-                                lambda x: x.find_element_by_xpath(
+                                lambda x: x.find_element(By.XPATH,
                                     '/html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select'))
                             sel = Select(element)
                             sel.select_by_visible_text('Tout')
                             # Get tous les candidats du groupe
                             tpath = '/html/body/div[2]/div[5]/div/div[2]/div[3]/div/table'
-                            table = browser.find_element_by_xpath(tpath)
+                            table = browser.find_element(By.XPATH, tpath)
                             df = read_html(table.get_attribute('outerHTML'))
                             d = df[0000]
                             if len(d.columns) == 11:
@@ -585,26 +586,26 @@ def run(args, opt):
                                 except ValueError:
                                     pass
                             element = WebDriverWait(browser, 300).until(
-                                lambda x: x.find_element_by_link_text('Admissions'))
+                                lambda x: x.find_element(By.LINK_TEXT, 'Admissions'))
                             element.click()
                             # TODO : lien ci-dessous
                             element = WebDriverWait(browser, 300).until(
-                                lambda x: x.find_element_by_link_text('Suivi des admissions'))
+                                lambda x: x.find_element(By.LINK_TEXT, 'Suivi des admissions'))
                             element.click()
 
-                            details = browser.find_element_by_xpath(fpath + str(n) + ']/td[14]')
+                            details = browser.find_element(By.XPATH, fpath + str(n) + ']/td[14]')
                             browser.execute_script('arguments[0].scrollIntoView(true);', details)
                             details.click()
 
                             # /html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select/
                             element = WebDriverWait(browser, 300).until(
-                                lambda x: x.find_element_by_xpath(
+                                lambda x: x.find_element(By.XPATH,
                                     '/html/body/div[2]/div[5]/div/div[2]/div[1]/div[2]/div/label/select'))
                             sel = Select(element)
                             sel.select_by_visible_text('Tout')
                             # Get tous les candidats du groupe
                             tpath = '/html/body/div[2]/div[5]/div/div[2]/div[3]/div/table'
-                            table = browser.find_element_by_xpath(tpath)
+                            table = browser.find_element(By.XPATH, tpath)
                             df = read_html(table.get_attribute('outerHTML'))
                             d = df[0000]
                             if len(d.columns) == 11:
@@ -645,11 +646,11 @@ def run(args, opt):
                                 except ValueError:
                                     pass
                             element = WebDriverWait(browser, 300).until(
-                                lambda x: x.find_element_by_link_text('Admissions'))
+                                lambda x: x.find_element(By.LINK_TEXT, 'Admissions'))
                             element.click()
                             # TODO : lien ci-dessous
                             element = WebDriverWait(browser, 300).until(
-                                lambda x: x.find_element_by_link_text('Suivi des admissions'))
+                                lambda x: x.find_element(By.LINK_TEXT, 'Suivi des admissions'))
                             element.click()
                             sleep(10)
 
