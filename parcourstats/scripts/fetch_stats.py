@@ -482,7 +482,7 @@ def run(args, opt):
                         # /html/body/div[2]/div[4]/div/div/div[3]/div/table/tbody/tr[1]/td[12]
                         # /html/body/div[2]/div[4]/div/div[3]/div[3]/div/table/tbody/tr[1]/td[18]
                         if libelle != 'Total':
-                            details = browser.find_element(By.XPATH, fpath + str(n) + ']/td[18]')
+                            details = browser.find_element(By.XPATH, fpath + str(n) + ']/td[20]')
                             browser.execute_script('arguments[0].scrollIntoView(true);', details)
                             details.click()
 
@@ -533,7 +533,7 @@ def run(args, opt):
                                 lambda x: x.find_element(By.LINK_TEXT, 'Suivi des admissions'))
                             element.click()
 
-                            details = browser.find_element(By.XPATH, fpath + str(n) + ']/td[11]')
+                            details = browser.find_element(By.XPATH, fpath + str(n) + ']/td[13]')
                             browser.execute_script('arguments[0].scrollIntoView(true);', details)
                             details.click()
 
@@ -593,7 +593,7 @@ def run(args, opt):
                                 lambda x: x.find_element(By.LINK_TEXT, 'Suivi des admissions'))
                             element.click()
 
-                            details = browser.find_element(By.XPATH, fpath + str(n) + ']/td[12]')
+                            details = browser.find_element(By.XPATH, fpath + str(n) + ']/td[14]')
                             browser.execute_script('arguments[0].scrollIntoView(true);', details)
                             details.click()
 
